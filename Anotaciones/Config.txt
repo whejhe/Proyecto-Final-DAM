@@ -1,0 +1,21 @@
+Descarga node:
+https://nodejs.org/es
+
+Verificar versiones node y npm:
+node -v
+npm -v
+
+Desinstalar version Antigua:
+npm uninstall -g expo-cli
+
+Ver opciones:
+npx create-expo-app --help
+
+Crear Proyecto:
+npx create-expo-app proyecto-final-dam --template blank
+
+Actualizar todas las dependencias recomendadas:
+npx expo install --fix
+
+Iniciar Proyecto: 
+npx expo start

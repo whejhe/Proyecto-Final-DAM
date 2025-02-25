@@ -1,0 +1,13 @@
+proyecto-final-dam/
+├── src/
+│   ├── components/
+|   |   |       ExampleComponent.js
+│   ├── navigation/
+│   |   |       index.js
+│   ├── screens/
+│   |   |       HomeScreen.js
+├── App.js
+├── assets/
+│   ├── fonts/
+│   └── images/
+├── package.json

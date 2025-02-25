@@ -14,7 +14,8 @@ npx create-expo-app --help
 Crear Proyecto:
 npx create-expo-app proyecto-final-dam --template blank
 
-Actualizar todas las dependencias recomendadas:
+Actualizar todas las dependencias:
+npm install
 npx expo install --fix
 
 Iniciar Proyecto: 

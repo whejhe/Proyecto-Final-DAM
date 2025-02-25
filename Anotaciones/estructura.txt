@@ -1,13 +1,11 @@
-proyecto-final-dam/
-├── src/
-│   ├── components/
-|   |   |       ExampleComponent.js
-│   ├── navigation/
-│   |   |       index.js
-│   ├── screens/
-│   |   |       HomeScreen.js
+my-react-native-app
+├── assets
+├── components
+│   └── Home.js
+├── screens
+│   └── HomeScreen.js
 ├── App.js
-├── assets/
-│   ├── fonts/
-│   └── images/
+├── app.json
+├── babel.config.js
 ├── package.json
+└── README.md

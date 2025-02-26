@@ -70,8 +70,9 @@ export default function Register() {
               quality: 1,
             });
 
-            if (!result.cancelled) {
+            if (!result.canceled) {
               setAvatar(result.uri);
+              console.log('Avatar URI:', result.uri);  // Verificar el valor del avatar
             }
           },
         },
@@ -85,7 +86,7 @@ export default function Register() {
               quality: 1,
             });
 
-            if (!result.cancelled) {
+            if (!result.canceled) {
               setAvatar(result.uri);
             }
           },

@@ -1,18 +1,30 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, Button, View } from 'react-native';
+import { StyleSheet, Text, TextInput, Pressable, View, Image, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../config/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import * as ImagePicker from 'expo-image-picker';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [name, setName] = useState('');
+  const [avatar, setAvatar] = useState('');
   const [error, setError] = useState('');
   const navigation = useNavigation();
 
   const handleRegister = () => {
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden');
+      return;
+    }
+
     createUserWithEmailAndPassword(FIREBASE_AUTH, email, password)
       .then(async (userCredential) => {
         const user = userCredential.user;
@@ -20,7 +32,7 @@ export default function Register() {
         await setDoc(doc(FIRESTORE_DB, 'users', user.uid), {
           name: name,
           email: email,
-          avatar: '',
+          avatar: avatar || 'default-User.png',
         });
         setError('');
         navigation.navigate('Login');
@@ -30,32 +42,110 @@ export default function Register() {
       });
   };
 
+  // Función para seleccionar una imagen
+  const selectImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Se requieren permisos para acceder a la galería.');
+      return;
+    }
+
+    Alert.alert(
+      'Seleccionar imagen',
+      'Elige una opción',
+      [
+        {
+          text: 'Tomar foto',
+          onPress: async () => {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync();
+            if (status !== 'granted') {
+              alert('Se requieren permisos para acceder a la cámara.');
+              return;
+            }
+
+            const result = await ImagePicker.launchCameraAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              allowsEditing: true,
+              aspect: [4, 3],
+              quality: 1,
+            });
+
+            if (!result.cancelled) {
+              setAvatar(result.uri);
+            }
+          },
+        },
+        {
+          text: 'Elegir de la galería',
+          onPress: async () => {
+            const result = await ImagePicker.launchImageLibraryAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              allowsEditing: true,
+              aspect: [4, 3],
+              quality: 1,
+            });
+
+            if (!result.cancelled) {
+              setAvatar(result.uri);
+            }
+          },
+        },
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Register</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <TextInput
         style={styles.input}
-        placeholder="Name"
+        placeholder="Nombre"
         value={name}
         onChangeText={setName}
       />
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder="Correo Electronico"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Button title="Register" onPress={handleRegister} />
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Contraseña"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+        />
+        <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.icon}>
+          <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color="gray" />
+        </Pressable>
+      </View>
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Confirmar Contraseña"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry={!showConfirmPassword}
+        />
+        <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.icon}>
+          <Ionicons name={showConfirmPassword ? 'eye-off' : 'eye'} size={20} color="gray" />
+        </Pressable>
+      </View>
+      <Pressable onPress={selectImage}>
+        <Image source={avatar ? { uri: avatar } : require('../../assets/img/avatars/default-User.png')} style={styles.image} />
+      </Pressable>
+      <Pressable onPress={handleRegister}>
+        <Text style={styles.Button}>Register</Text>
+      </Pressable>
     </View>
   );
 }
@@ -63,24 +153,65 @@ export default function Register() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 16,
   },
   title: {
     fontSize: 24,
     marginBottom: 20,
   },
   input: {
-    width: '100%',
     height: 40,
     borderColor: 'gray',
     borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
+    marginBottom: 12,
+    paddingHorizontal: 8,
+    marginHorizontal: 20,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 12,
+    position: 'relative',
+  },
+  passwordInput: {
+    flex: 1,
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+  },
+  icon: {
+    padding: 10,
+    position: 'absolute',
+    right: 0,
   },
   error: {
     color: 'red',
     marginBottom: 10,
+    textAlign: 'center',
   },
+  image: {
+    width: 100,
+    height: 100,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  Button: {
+    backgroundColor: 'black',
+    color: 'white',
+    padding: 10,
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 12,
+    marginHorizontal: 20,
+    borderRadius: 5,
+  },
+  showPasswordButton: {
+    color: 'blue',
+    textAlign: 'right',
+    marginRight: 20,
+    marginBottom: 12,
+  }
 });

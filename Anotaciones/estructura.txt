@@ -1,11 +1,22 @@
-my-react-native-app
+Proyecto-Final-DAM
+├── .expo
+├── node_modules
 ├── assets
+│   └── img
+|   │   └── avatars
+|   |   │   └── default-User.png
+├── config
+|   └── firebase.js
 ├── components
+├── pages
 │   └── Home.js
-├── screens
-│   └── HomeScreen.js
+│   └── Login.js
+│   └── Register.js
+│   └── ForgotPassword.js
 ├── App.js
 ├── app.json
+├── index.js
+├── metro.config.js
 ├── babel.config.js
 ├── package.json
 └── README.md

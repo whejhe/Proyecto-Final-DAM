@@ -19,7 +19,7 @@ const Login = () => {
           const user = userCredential.user;
           console.log('Sesión iniciada con:', user.email);
           setError('');
-          navigation.navigate('Home'); // Redirigir a la pantalla de Home
+          navigation.navigate('Home');
         })
         .catch((error) => {
           setError(error.message);

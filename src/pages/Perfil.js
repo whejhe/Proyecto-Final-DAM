@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, Button, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { FIREBASE_AUTH } from '../config/firebase';
 import { signOut } from 'firebase/auth';
 
-const Home = () => {
+const Perfil = () => {
     const navigation = useNavigation();
 
     const handleLogout = () => {
@@ -19,14 +19,8 @@ const Home = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Home</Text>
-            <Pressable style={styles.button} onPress={() => navigation.navigate('Perfil')}>
-                <Text style={styles.textButton}>Ir a Perfil</Text>
-            </Pressable>
-            {/* <Button title="Logout" onPress={handleLogout} /> */}
-            <Pressable style={styles.button} onPress={handleLogout}>
-                <Text style={styles.textButton}>Logout</Text>
-            </Pressable>
+            <Text style={styles.title}>Pagina de Perfil</Text>
+            <Button title="Logout" onPress={handleLogout} />
         </View>
     );
 };
@@ -42,18 +36,6 @@ const styles = StyleSheet.create({
         fontSize: 24,
         marginBottom: 20,
     },
-    button: {
-        backgroundColor: 'black',
-        padding: 10,
-        textAlign: 'center',
-        marginBottom: 12,
-        marginHorizontal: 20,
-        borderRadius: 5,
-    },
-    textButton: {
-        color: 'white',
-        fontSize: 18,
-    },
 });
 
-export default Home;
+export default Perfil;

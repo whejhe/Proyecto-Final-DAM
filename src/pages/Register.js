@@ -144,8 +144,8 @@ export default function Register() {
       <Pressable onPress={selectImage}>
         <Image source={avatar ? { uri: avatar } : require('../../assets/img/avatars/default-User.png')} style={styles.image} />
       </Pressable>
-      <Pressable onPress={handleRegister}>
-        <Text style={styles.Button}>Register</Text>
+      <Pressable style={styles.button} onPress={handleRegister}>
+        <Text style={styles.textButton}>Register</Text>
       </Pressable>
     </View>
   );
@@ -199,15 +199,20 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 20,
   },
-  Button: {
+  button: {
     backgroundColor: 'black',
-    color: 'white',
+    // color: 'white',
     padding: 10,
-    fontSize: 18,
+    // fontSize: 18,
     textAlign: 'center',
     marginBottom: 12,
     marginHorizontal: 20,
     borderRadius: 5,
+  },
+  textButton: {
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
   },
   showPasswordButton: {
     color: 'blue',

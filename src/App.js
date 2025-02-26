@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
 import ForgotPassword from './pages/ForgotPassword';
+import Perfil from './pages/Perfil';
 
 const Stack = createStackNavigator();
 
@@ -17,6 +18,7 @@ export default function App() {
         <Stack.Screen name="Register" component={Register} />
         <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
         <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="Perfil" component={Perfil} />
       </Stack.Navigator>
     </native.NavigationContainer>
   );

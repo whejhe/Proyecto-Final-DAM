@@ -1,18 +1,29 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, Button, View } from 'react-native';
-import { FIREBASE_AUTH } from '../config/firebase';
+import { useNavigation } from '@react-navigation/native';
+import { FIREBASE_AUTH, FIRESTORE_DB } from '../config/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const navigation = useNavigation();
 
   const handleRegister = () => {
     createUserWithEmailAndPassword(FIREBASE_AUTH, email, password)
-      .then(() => {
+      .then(async (userCredential) => {
+        const user = userCredential.user;
+        console.log('Usuario registrado:', user.email);
+        await setDoc(doc(FIRESTORE_DB, 'users', user.uid), {
+          name: name,
+          email: email,
+          avatar: '',
+        });
         setError('');
-        // Registro exitoso: puedes navegar o mostrar un mensaje
+        navigation.navigate('Login');
       })
       .catch((error) => {
         setError(error.message);
@@ -23,6 +34,12 @@ export default function Register() {
     <View style={styles.container}>
       <Text style={styles.title}>Register</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
+      <TextInput
+        style={styles.input}
+        placeholder="Name"
+        value={name}
+        onChangeText={setName}
+      />
       <TextInput
         style={styles.input}
         placeholder="Email"

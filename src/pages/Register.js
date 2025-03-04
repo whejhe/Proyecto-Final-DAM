@@ -6,7 +6,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { pickImageAndUpload } from '../config/cloudinaryUpload';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -16,8 +16,22 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState(null);
   const [error, setError] = useState('');
   const navigation = useNavigation();
+
+  // Función para seleccionar y subir el avatar
+  const handleSelectAvatar = async () => {
+    try {
+      const url = await pickImageAndUpload();
+      if (url) {
+        setAvatarUrl(url);
+      }
+    } catch (err) {
+      setError('Error al subir la imagen');
+      console.error(err);
+    }
+  };
 
   const handleRegister = () => {
     if (password !== confirmPassword) {
@@ -36,6 +50,7 @@ export default function Register() {
         });
         setError('');
         navigation.navigate('Login');
+        console.log('Registro exitoso. Avatar:', avatarUrl);
       })
       .catch((error) => {
         setError(error.message);

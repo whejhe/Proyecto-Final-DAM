@@ -64,7 +64,7 @@ export default function Register() {
             }
 
             const result = await ImagePicker.launchCameraAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              mediaTypes: ['images'],
               allowsEditing: true,
               aspect: [4, 3],
               quality: 1,
@@ -72,7 +72,7 @@ export default function Register() {
 
             if (!result.canceled) {
               setAvatar(result.uri);
-              console.log('Avatar URI:', result.uri);  // Verificar el valor del avatar
+              console.log('Avatar URI:', result.uri);
             }
           },
         },
@@ -80,7 +80,7 @@ export default function Register() {
           text: 'Elegir de la galería',
           onPress: async () => {
             const result = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              mediaTypes: ['images'],
               allowsEditing: true,
               aspect: [4, 3],
               quality: 1,

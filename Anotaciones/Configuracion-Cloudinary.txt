@@ -1,0 +1,5 @@
+1 - Regístrate en Cloudinary y obtén tu cloud name.
+
+2 - Añadir dependencias
+npx expo install expo-image-picker
+npm i @cloudinary/url-gen @cloudinary/react

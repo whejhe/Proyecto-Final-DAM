@@ -18,5 +18,8 @@ Actualizar todas las dependencias:
 npm install
 npx expo install --fix
 
+Para almacenar las fotos localmente:
+expo install expo-file-system
+
 Iniciar Proyecto: 
 npx expo start

@@ -1,0 +1,75 @@
+1 - Intoducción:
+- Un rally fotográfico es una actividad en la que los participantes deben capturar fotografias dentro de 
+un marco temporal y temático definido.
+- Estas imagemes son evaluadas en función de su calidad técnica, creatividad y cumplimiento de las 
+directrices del rally. Para gestionar este tipo de eventos, se requiere una aplicacion multiplataforma que
+permita la inscripción de participantes, la subida y validación de fotografias, la votación publica y 
+la visualización de resultados.
+
+2 - Objetivos del proyecto
+El objetivo del proyecto es desarrollar una aplicacion multiplataformas para la gestion de 
+un rally fotografico que permita:
+    - La inscripcion y gestión de participantes
+    - La subida, validación y publicación de fotografias
+    - La votacion pública de las imagenes
+    - La visualización de resultados en tiempo real.
+
+3 - Estructura de la aplicación propuesta:
+    3.1 - Pantalla de Inicio (Home)
+            - Información sobre el rally fotográfico (bases del concurso, plazos, premios, ect ... )
+            - Botón para registrarse como participante
+            - Botón para hacer login como participante o administrador
+            - Acceso a la galeria de foografias publicadas por los participantes.
+    3.2 - Usuario administrador 
+            - La aplicación debe tener al menos un usuario con el rol de administrador
+            - Configuración de parámetros del rally (plazo de recepción de fotografias, limite de fotografias
+            por participante, plazo permitido de votación, etc.)
+            - Gestión de usuarios (baja y modificación)
+            - Validación de fotografias (estados: pendiente, admitida, rechazada).
+            - Visualizacion de estadisticas y resultados
+    3.3 - Participantes
+            - La aplicación permitira darse de alta como participante del rally fotografico.
+            - La solicitud de alta consiste en un formulario que pide algunos datos personales 
+            esenciales. Dicho formulario debe validar los datos introducidos.
+            - Los usuarios dados de alta como paricipantes del Rally, pueden acceder a su perfil
+            y modificar datos.
+            - Subida de fotografia: los usuarios dados de alta como participantes del rally, pueden
+            subir un numero determinado de fotos (establecido en las bases del concurso, configurado por el administrador)
+                - El formulario de subida de fotos validará que cumplan determinadas carasteristicas (tamaño maximo, formato, ect..)
+                de acuerdo a las bases del cuncurso (a decidir por mi)
+                - Las fotos subidas no se publicaran inmediatamente en la galeria del concurso, deben ser previamente
+                aceptadas como validas por el administrador. Por tanto, pueden tener estados "pendiente", "admitidas", "rechazadas" o similares.
+            - Visualizacion y gestión de sus fotografias (estado, eliminación)
+    3.4 - Publico General
+            - En la pagina principal se podrá acceder a la solicitud de alta y a las bases del concurso.
+            Pueden ambientarlo en el contexto o zona geográfica que quieran.
+            - Visualización de la galeria de fotografias.
+            - Votación de fotografias (con limite de votos).
+            - Visualización de rankings y gráficos de votaciones.
+
+
+4 - Implementación:
+        - React Native con Expo para el Front
+        - Firebase para almacenar las colecciones y gestionar los registros
+        - Cloudinary para almacenar todas las imagenes 
+
+        Funcionalidades minimas:
+                - Operaciones CRUD para usuarios y fotografias
+                - Validación de datos en formularios ()
+                - Authenticación y control de acceso (roles de administrador y participantes)
+                - Despliegue en un entorno similar a producción
+        Valorable:
+                - Mecanismo de Votación
+                - Uso de un sistema de control de versiones (Git) con repositorio remoto (Github)
+                - Documentacion clara y completa del proyecto.
+                - Codigo optimizado para producción
+
+5 - Documentacion requerida:
+        - Tecnologias Utilizadas (justificacion de eleccion)
+        - Diagrama de estructura de colecciones y documentos
+        - Desarrollo del proyecto (Comentarios sobre deciciones tecnicas, dificultades encontradas y
+        soluciones implementadas)
+        - Manual de instalación (Incluir en un fichero README de los repositorios)
+        - Manual de Usuario (Instrucciones para el uso de la aplicacion)
+        - Manual de Administrador (Instrucciones para la gestión de la aplicacion)
+        - Consideraciones de ampliaciones futuras: Propuestas de mejora o funcionalidades adicionales

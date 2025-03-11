@@ -3,7 +3,7 @@ import { StyleSheet, Text, TextInput, Pressable, View, Image, Alert } from 'reac
 import { useNavigation } from '@react-navigation/native';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../config/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { pickImageAndUpload } from '../config/cloudinaryUpload';
@@ -46,7 +46,9 @@ export default function Register() {
         await setDoc(doc(FIRESTORE_DB, 'users', user.uid), {
           name: name,
           email: email,
-          avatar: avatar || 'default-User.png',
+          avatar: avatarUrl || 'default-User.png',  // Usa avatarUrl obtenido de Cloudinary
+          role: 'participant',                     // Por defecto, rol de participante
+          createdAt: serverTimestamp(),
         });
         setError('');
         navigation.navigate('Login');

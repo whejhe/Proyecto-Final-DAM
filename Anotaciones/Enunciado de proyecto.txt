@@ -1,14 +1,14 @@
 1 - Intoducción:
-- Un rally fotográfico es una actividad en la que los participantes deben capturar fotografias dentro de 
+- La aplicacion consiste en un concurso fotográfico en el que los participantes deben capturar fotografias dentro de 
 un marco temporal y temático definido.
 - Estas imagemes son evaluadas en función de su calidad técnica, creatividad y cumplimiento de las 
-directrices del rally. Para gestionar este tipo de eventos, se requiere una aplicacion multiplataforma que
+directrices del concurso. Para gestionar este tipo de eventos, se requiere una aplicacion multiplataforma que
 permita la inscripción de participantes, la subida y validación de fotografias, la votación publica y 
 la visualización de resultados.
 
 2 - Objetivos del proyecto
 El objetivo del proyecto es desarrollar una aplicacion multiplataformas para la gestion de 
-un rally fotografico que permita:
+un concurso fotografico que permita:
     - La inscripcion y gestión de participantes
     - La subida, validación y publicación de fotografias
     - La votacion pública de las imagenes
@@ -16,24 +16,24 @@ un rally fotografico que permita:
 
 3 - Estructura de la aplicación propuesta:
     3.1 - Pantalla de Inicio (Home)
-            - Información sobre el rally fotográfico (bases del concurso, plazos, premios, ect ... )
+            - Información sobre el concurso fotográfico (bases del concurso, plazos, premios, ect ... )
             - Botón para registrarse como participante
             - Botón para hacer login como participante o administrador
             - Acceso a la galeria de foografias publicadas por los participantes.
     3.2 - Usuario administrador 
             - La aplicación debe tener al menos un usuario con el rol de administrador
-            - Configuración de parámetros del rally (plazo de recepción de fotografias, limite de fotografias
+            - Configuración de parámetros del concurso (plazo de recepción de fotografias, limite de fotografias
             por participante, plazo permitido de votación, etc.)
             - Gestión de usuarios (baja y modificación)
             - Validación de fotografias (estados: pendiente, admitida, rechazada).
             - Visualizacion de estadisticas y resultados
     3.3 - Participantes
-            - La aplicación permitira darse de alta como participante del rally fotografico.
+            - La aplicación permitira darse de alta como participante del concurso fotografico.
             - La solicitud de alta consiste en un formulario que pide algunos datos personales 
             esenciales. Dicho formulario debe validar los datos introducidos.
-            - Los usuarios dados de alta como paricipantes del Rally, pueden acceder a su perfil
+            - Los usuarios dados de alta como paricipantes del concurso, pueden acceder a su perfil
             y modificar datos.
-            - Subida de fotografia: los usuarios dados de alta como participantes del rally, pueden
+            - Subida de fotografia: los usuarios dados de alta como participantes del concurso, pueden
             subir un numero determinado de fotos (establecido en las bases del concurso, configurado por el administrador)
                 - El formulario de subida de fotos validará que cumplan determinadas carasteristicas (tamaño maximo, formato, ect..)
                 de acuerdo a las bases del cuncurso (a decidir por mi)

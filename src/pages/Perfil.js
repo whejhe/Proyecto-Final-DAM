@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Button, Image, Text, StyleSheet } from 'react-native';
 import { pickImageAndUpload } from '../config/cloudinaryUpload';
+import { doc, updateDoc } from 'firebase/firestore';
 
 export default function Perfil({ user }) {
     // Suponiendo que 'user' es el objeto de usuario que tiene un campo "avatar"
@@ -10,16 +11,16 @@ export default function Perfil({ user }) {
 
     const handleUpdateAvatar = async () => {
         try {
-            const url = await pickImageAndUpload();
-            if (url) {
-                setAvatarUrl(url);
-                // Aquí actualizas el perfil del usuario en tu base de datos con la nueva URL
-            }
+          const url = await pickImageAndUpload();
+          if (url) {
+            setAvatarUrl(url);
+            await updateDoc(doc(FIRESTORE_DB, 'users', user.uid), { avatar: url });
+          }
         } catch (err) {
-            setError('Error al actualizar el avatar');
-            console.error(err);
+          setError('Error al actualizar el avatar');
+          console.error(err);
         }
-    };
+      };
 
     return (
         <View style={styles.container}>

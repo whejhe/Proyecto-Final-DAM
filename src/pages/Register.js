@@ -21,17 +21,17 @@ export default function Register() {
   const navigation = useNavigation();
 
   // Función para seleccionar y subir el avatar
-  const handleSelectAvatar = async () => {
-    try {
-      const url = await pickImageAndUpload();
-      if (url) {
-        setAvatarUrl(url);
-      }
-    } catch (err) {
-      setError('Error al subir la imagen');
-      console.error(err);
-    }
-  };
+  // const handleSelectAvatar = async () => {
+  //   try {
+  //     const url = await pickImageAndUpload();
+  //     if (url) {
+  //       setAvatarUrl(url);
+  //     }
+  //   } catch (err) {
+  //     setError('Error al subir la imagen');
+  //     console.error(err);
+  //   }
+  // };
 
   const handleRegister = () => {
     if (password !== confirmPassword) {

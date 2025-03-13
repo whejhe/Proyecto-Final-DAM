@@ -46,11 +46,11 @@ export async function uploadImageToCloudinary(imageUri) {
 // Función que permite seleccionar una imagen de la galería y luego subirla
 export async function pickImageAndUpload() {
     const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaType.IMAGES, // Antes era ImagePicker.MediaTypeOptions.Images
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.7,
-    });
+        quality: 1,
+      });
 
     if (!result.canceled) {
         const imageUri = result.assets[0].uri;

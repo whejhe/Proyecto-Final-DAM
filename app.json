@@ -3,6 +3,12 @@
     "name": "proyecto-final-dam",
     "slug": "proyecto-final-dam",
     "version": "1.0.0",
+    "extra": {
+      "CLOUDINARY_URL":"cloudinary://984767331399785:u6RZBfncoPw-8_JTQ4sBHkatThI@c6rlosfern6ndez",
+      "CLOUDINARY_CLOUD_NAME": "c6rlosfern6ndez",
+      "CLOUDINARY_UPLOAD_PRESET": "avatar_upload",
+      "CLOUDINARY_UPLOAD_URL": "https://api.cloudinary.com/v1_1/c6rlosfern6ndez/image/upload"
+    },
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

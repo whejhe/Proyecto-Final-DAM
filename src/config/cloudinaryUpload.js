@@ -1,64 +1,69 @@
-// src/config/cloudinaryUpload.js
-import * as ImagePicker from 'expo-image-picker';
+import Constants from 'expo-constants';
 
-// Esta variable puede servir para construir URLs de imagen u otros usos en el futuro
-export const CLOUDINARY_URL = "cloudinary://984767331399785:u6RZBfncoPw-8_JTQ4sBHkatThI@dds4melcf";
+const { CLOUDINARY_URL, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET, CLOUDINARY_UPLOAD_URL } = Constants.expoConfig.extra;
 
-// Configuración específica de Cloudinary para las cargas
-const CLOUDINARY_CONFIG = {
-    cloudName: 'dds4melcf',
-    uploadPreset: 'avatar_upload',
-    uploadUrl: 'https://api.cloudinary.com/v1_1/dds4melcf/image/upload'
-};
+if (!CLOUDINARY_URL || !CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET || !CLOUDINARY_UPLOAD_URL) {
+  throw new Error('Missing Cloudinary configuration in .env file');
+}
 
 // Función helper para subir un blob a Cloudinary
 async function uploadBlobToCloudinary(blob) {
-    const formData = new FormData();
-    formData.append('file', blob);
-    formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
-    formData.append('cloud_name', CLOUDINARY_CONFIG.cloudName);
+  const formData = new FormData();
+  formData.append('file', blob);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
 
-    const res = await fetch(CLOUDINARY_CONFIG.uploadUrl, {
-        method: 'POST',
-        body: formData,
-    });
+  const res = await fetch(CLOUDINARY_UPLOAD_URL, {
+    method: 'POST',
+    body: formData,
+  });
 
-    const data = await res.json();
-    if (data.secure_url) {
-        return data.secure_url;
-    } else {
-        throw new Error('Error al subir la imagen: ' + JSON.stringify(data));
-    }
+  const data = await res.json();
+  if (data.secure_url) {
+    return data.secure_url;
+  } else {
+    throw new Error('Error al subir la imagen: ' + JSON.stringify(data));
+  }
 }
 
 // Función que recibe una URI de imagen y la sube a Cloudinary
 export async function uploadImageToCloudinary(imageUri) {
-    try {
-        const response = await fetch(imageUri);
-        const blob = await response.blob();
-        return await uploadBlobToCloudinary(blob);
-    } catch (error) {
-        console.error('Error en uploadImageToCloudinary:', error);
-        throw error;
-    }
+  try {
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+    return await uploadBlobToCloudinary(blob);
+  } catch (error) {
+    console.error('Error en uploadImageToCloudinary:', error);
+    throw error;
+  }
 }
 
-// Función que permite seleccionar una imagen de la galería y luego subirla
-export async function pickImageAndUpload() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaType.IMAGES, // Antes era ImagePicker.MediaTypeOptions.Images
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 1,
-      });
 
-    if (!result.canceled) {
-        const imageUri = result.assets[0].uri;
-        try {
-            return await uploadImageToCloudinary(imageUri);
-        } catch (err) {
-            console.error('Error al subir la imagen:', err);
-        }
-    }
-    return null;
-}
+export const pickImageAndUpload = async (imageUri) => {
+  try {
+    let formData = new FormData();
+
+    formData.append("file", {
+      uri: imageUri,
+      name: "avatar.jpg",
+      type: "image/jpeg",
+    });
+
+    formData.append("upload_preset", "avatar_upload");
+    formData.append("folder", "Avatars"); 
+
+    let response = await fetch("https://api.cloudinary.com/v1_1/c6rlosfern6ndez/image/upload", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Accept": "application/json",
+      },
+    });
+
+    let data = await response.json();
+    return data.secure_url;
+  } catch (error) {
+    console.error("Error al subir la imagen:", error);
+    throw error;
+  }
+};

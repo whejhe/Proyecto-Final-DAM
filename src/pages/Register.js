@@ -16,6 +16,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 import { pickImageAndUpload } from "../config/cloudinaryUpload";
 
+
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +29,7 @@ export default function Register() {
   const [error, setError] = useState("");
   const navigation = useNavigation();
 
-  const defaultAvatar = "https://res-console.cloudinary.com/c6rlosfern6ndez/thumbnails/v1/image/upload/v1741953577/ZGVmYXVsdC1Vc2VyX3dpdDRmZg==/drilldown";
+  const defaultAvatar = require("../../assets/img/avatars/default-User.png");
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {

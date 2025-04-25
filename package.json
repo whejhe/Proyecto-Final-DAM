@@ -13,13 +13,10 @@
   },
   "dependencies": {
     "@babel/core": "^7.25.2",
-    "@cloudinary/react": "^1.14.1",
-    "@cloudinary/url-gen": "^1.21.0",
     "@expo/metro-runtime": "~4.0.1",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.1",
-    "cloudinary-react-native": "^1.0.1",
     "crypto-js": "^4.2.0",
     "expo": "~52.0.37",
     "expo-file-system": "~18.0.11",

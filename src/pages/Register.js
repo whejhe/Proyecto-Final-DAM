@@ -14,7 +14,8 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
-import { pickImageAndUpload } from "../config/cloudinaryUpload";
+import * as FileSystem from 'expo-file-system';
+import { Platform } from "react-native";
 
 
 export default function Register() {
@@ -36,102 +37,113 @@ export default function Register() {
       setError("Las contraseñas no coinciden");
       return;
     }
-  
-    let finalAvatarUrl = avatarUrl;
-  
-    if (avatar && !avatarUrl) {
-      try {
-        // Subir la imagen a Cloudinary antes de registrar
-        finalAvatarUrl = await pickImageAndUpload(avatar);
-        setAvatarUrl(finalAvatarUrl);
-      } catch (error) {
-        setError("Error al subir la imagen.");
-        console.error(error);
-        return;
-      }
-    }
-  
+
     createUserWithEmailAndPassword(FIREBASE_AUTH, email, password)
       .then(async (userCredential) => {
         const user = userCredential.user;
         console.log("Usuario registrado:", user.email);
-  
+
         await setDoc(doc(FIRESTORE_DB, "users", user.uid), {
           name: name,
           email: email,
-          avatar: finalAvatarUrl || defaultAvatar,
+          avatar: avatar || null, // Guardar la imagen en Base64
           role: "participant",
           createdAt: serverTimestamp(),
         });
-  
+
         setError("");
         navigation.navigate("Login");
-        console.log("Registro exitoso. Avatar:", finalAvatarUrl);
+        console.log("Registro exitoso. Avatar almacenado en Base64.");
       })
       .catch((error) => {
         setError(error.message);
       });
   };
-  
 
-  const selectImage = async () => {
+const selectImage = async () => {
+  if (Platform.OS === "web") {
+    // Manejo para la web
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          setAvatar(reader.result); // Guardar la imagen como Base64
+          console.log("Imagen seleccionada en la web:", reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  } else {
+    // Manejo para dispositivos móviles (iOS/Android)
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Se requieren permisos para acceder a la galería.');
+    if (status !== "granted") {
+      alert("Se requieren permisos para acceder a la galería.");
       return;
     }
-  
+
     Alert.alert(
-      'Seleccionar imagen',
-      'Elige una opción',
+      "Seleccionar imagen",
+      "Elige una opción",
       [
         {
-          text: 'Tomar foto',
+          text: "Tomar foto",
           onPress: async () => {
             const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            if (status !== 'granted') {
-              alert('Se requieren permisos para acceder a la cámara.');
+            if (status !== "granted") {
+              alert("Se requieren permisos para acceder a la cámara.");
               return;
             }
-  
+
             const result = await ImagePicker.launchCameraAsync({
-              mediaTypes: ImagePicker.MediaType.IMAGE,
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
               allowsEditing: true,
               aspect: [4, 3],
               quality: 1,
             });
-  
+
             if (!result.canceled) {
-              setAvatar(result.assets[0].uri); // Guardar la URI seleccionada
-              console.log('Avatar URI:', result.assets[0].uri);
+              const base64 = await FileSystem.readAsStringAsync(result.uri, {
+                encoding: FileSystem.EncodingType.Base64,
+              });
+              setAvatar(`data:image/jpeg;base64,${base64}`);
+              console.log("Imagen seleccionada desde la cámara:", base64);
             }
           },
         },
         {
-          text: 'Elegir de la galería',
+          text: "Elegir de la galería",
           onPress: async () => {
             const result = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ImagePicker.MediaType.IMAGE,
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
               allowsEditing: true,
               aspect: [4, 3],
               quality: 1,
             });
-  
+
             if (!result.canceled) {
-              setAvatar(result.assets[0].uri); // Guardar la URI seleccionada
-              console.log('Avatar seleccionado:', result.assets[0].uri);
+              const base64 = await FileSystem.readAsStringAsync(result.uri, {
+                encoding: FileSystem.EncodingType.Base64,
+              });
+              setAvatar(`data:image/jpeg;base64,${base64}`);
+              console.log("Imagen seleccionada desde la galería:", base64);
             }
           },
         },
         {
-          text: 'Cancelar',
-          style: 'cancel',
+          text: "Cancelar",
+          style: "cancel",
         },
       ],
       { cancelable: true }
     );
-  };
-  
+  }
+};
+
 
   return (
     <View style={styles.container}>

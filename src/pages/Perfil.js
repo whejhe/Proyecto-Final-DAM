@@ -11,16 +11,16 @@ export default function Perfil({ user }) {
 
     const handleUpdateAvatar = async () => {
         try {
-          const url = await pickImageAndUpload();
-          if (url) {
-            setAvatarUrl(url);
-            await updateDoc(doc(FIRESTORE_DB, 'users', user.uid), { avatar: url });
-          }
+            const url = await pickImageAndUpload();
+            if (url) {
+                setAvatarUrl(url);
+                await updateDoc(doc(FIRESTORE_DB, 'users', user.uid), { avatar: url });
+            }
         } catch (err) {
-          setError('Error al actualizar el avatar');
-          console.error(err);
+            setError('Error al actualizar el avatar');
+            console.error(err);
         }
-      };
+    };
 
     return (
         <View style={styles.container}>

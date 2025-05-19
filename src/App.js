@@ -4,9 +4,11 @@ import { NavigationContainer } from "@react-navigation/native";
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
+import PanelAdmin from './pages/PanelAdmin';
 import ForgotPassword from './pages/ForgotPassword';
 import Perfil from './pages/Perfil';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import ListadoConcursos from './pages/ListadoConcursos';
 
 const Stack = createStackNavigator();
 
@@ -30,7 +32,8 @@ export default function App() {
         <Stack.Screen name="Register" component={Register} />
         <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
         <Stack.Screen name="Home" component={Home} />
-        {/* <Stack.Screen name="Perfil" component={Perfil} /> */}
+        <Stack.Screen name="ListadoConcursos" component={ListadoConcursos} />
+        <Stack.Screen name="PanelAdmin" component={PanelAdmin} />
         <Stack.Screen name="Perfil">
           {(props) =>
             currentUser ? (

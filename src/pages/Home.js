@@ -23,7 +23,12 @@ const Home = () => {
             <Pressable style={styles.button} onPress={() => navigation.navigate('Perfil')}>
                 <Text style={styles.textButton}>Ir a Perfil</Text>
             </Pressable>
-            {/* <Button title="Logout" onPress={handleLogout} /> */}
+            <Pressable style={styles.button} onPress={() => navigation.navigate('ListadoConcursos')}>
+                <Text style={styles.textButton}>Listado de Concursos</Text>
+            </Pressable>
+            <Pressable style={styles.button} onPress={() => navigation.navigate('PanelAdmin')}>
+                <Text style={styles.textButton}>Administrar Concursos</Text>
+            </Pressable>
             <Pressable style={styles.button} onPress={handleLogout}>
                 <Text style={styles.textButton}>Logout</Text>
             </Pressable>

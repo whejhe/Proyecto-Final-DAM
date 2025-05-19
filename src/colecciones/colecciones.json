@@ -29,14 +29,16 @@
             "fechaVoto": ""
         }
     ],
-    "Rally": [
+    "Concurso": [
         {
+            "concursoId": "",
+            "usersId": [],
             "nombreEvento": "",
+            "tema": "",
             "fechaInicio": "",
             "fechaFin": "",
-            "limiteFotos": 0,
-            "fechaVotacionInicio": "",
-            "fechaVotacionFin": ""
+            "descripcion": "",
+            "limiteFotosPorPersona": 3
         }
     ],
     "comments": [

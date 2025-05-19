@@ -46,7 +46,7 @@ export default function Register() {
           name: name,
           email: email,
           avatar: avatarUrl || null,
-          role: "participant",
+          role: ["user"],
           createdAt: serverTimestamp(),
         });
 

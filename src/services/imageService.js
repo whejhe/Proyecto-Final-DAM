@@ -5,9 +5,8 @@ const uploadImageToImgbb = async (imageUri) => {
   try {
     let base64Image = imageUri;
 
-    // Verifica si imageUri es una URI de datos (base64)
     if (!imageUri.startsWith('data:image')) {
-      // Verifica si la plataforma no es web antes de usar FileSystem
+      // Verifica si la plataforma no es web
       if (Platform.OS !== 'web') {
         const fileInfo = await FileSystem.getInfoAsync(imageUri);
         if (fileInfo.exists) {
@@ -24,7 +23,7 @@ const uploadImageToImgbb = async (imageUri) => {
         base64Image = imageUri;
       }
     } else {
-      // Elimina el encabezado "data:image..." si está presente
+      // Elimina el encabezado "data:image..."
       base64Image = base64Image.replace(/^data:image\/\w+;base64,/, '');
     }
 

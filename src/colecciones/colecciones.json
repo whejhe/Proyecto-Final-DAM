@@ -3,30 +3,13 @@
         {
             "uid": "",
             "email": "",
-            "nombre": "",
-            "rol": "participante",
-            "avatarUrl": "",
+            "name": "",
+            "rol": [
+                "admin",
+                "user"
+            ],
+            "avatar": "",
             "fechaRegistro": ""
-        }
-    ],
-    "photographs": [
-        {
-            "photoId": "",
-            "userId": "",
-            "imageUrl": "",
-            "titulo": "",
-            "descripcion": "",
-            "estado": "pendiente",
-            "fechaSubida": "",
-            "votos": 0
-        }
-    ],
-    "votes": [
-        {
-            "voteId": "",
-            "userId": "",
-            "photoId": "",
-            "fechaVoto": ""
         }
     ],
     "Concurso": [
@@ -39,15 +22,6 @@
             "fechaFin": "",
             "descripcion": "",
             "limiteFotosPorPersona": 3
-        }
-    ],
-    "comments": [
-        {
-            "commentId": "",
-            "photoId": "",
-            "userId": "",
-            "texto": "",
-            "fechaComentario": ""
         }
     ]
 }

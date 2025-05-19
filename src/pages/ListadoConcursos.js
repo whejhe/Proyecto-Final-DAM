@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
 import { FIRESTORE_DB } from '../config/firebase';
 import { collection, getDocs } from 'firebase/firestore';
+import { useNavigation } from '@react-navigation/native';
 
 const ListadoConcursos = () => {
     const [concursos, setConcursos] = useState([]);
+    const navigation = useNavigation();
 
     useEffect(() => {
         const obtenerConcursos = async () => {
@@ -20,6 +22,10 @@ const ListadoConcursos = () => {
         obtenerConcursos();
     }, []);
 
+    const handleConcursoPress = (concursoId) => {
+        navigation.navigate('FichaConcurso', { concursoId: concursoId });
+    };
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Listado Concursos</Text>
@@ -27,10 +33,12 @@ const ListadoConcursos = () => {
                 data={concursos}
                 keyExtractor={item => item.id}
                 renderItem={({ item }) => (
-                    <View style={styles.concursoItem}>
-                        <Text style={styles.concursoTitle}>{item.nombreEvento}</Text>
-                        <Text style={styles.concursoEstado}>Estado: {item.estado}</Text>
-                    </View>
+                    <Pressable onPress={() => handleConcursoPress(item.id)}>
+                        <View style={styles.concursoItem}>
+                            <Text style={styles.concursoTitle}>{item.nombreEvento}</Text>
+                            <Text style={styles.concursoEstado}>Estado: {item.estado}</Text>
+                        </View>
+                    </Pressable>
                 )}
             />
         </View>

@@ -7,6 +7,7 @@ import {
   View,
   Image,
   Alert,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { FIREBASE_AUTH, FIRESTORE_DB } from "../config/firebase";
@@ -14,9 +15,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from 'expo-file-system';
-import { Platform } from "react-native";
-
+import uploadImageToImgbb from "../services/imageService"; // Importa la función correctamente
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -30,7 +29,7 @@ export default function Register() {
   const [error, setError] = useState("");
   const navigation = useNavigation();
 
-  const defaultAvatar = require("../../assets/img/avatars/default-User.png");
+  const defaultAvatar = require("../../assets/avatars/default-User.png");
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
@@ -46,7 +45,7 @@ export default function Register() {
         await setDoc(doc(FIRESTORE_DB, "users", user.uid), {
           name: name,
           email: email,
-          avatar: avatar || null, // Guardar la imagen en Base64
+          avatar: avatarUrl || null,
           role: "participant",
           createdAt: serverTimestamp(),
         });
@@ -60,90 +59,118 @@ export default function Register() {
       });
   };
 
-const selectImage = async () => {
-  if (Platform.OS === "web") {
-    // Manejo para la web
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.onchange = async (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          setAvatar(reader.result); // Guardar la imagen como Base64
-          console.log("Imagen seleccionada en la web:", reader.result);
-        };
-        reader.readAsDataURL(file);
+  const selectImage = async () => {
+    if (Platform.OS === "web") {
+      // Manejo para la web
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = async (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = async () => {
+            const base64 = reader.result.split(",")[1];
+
+            try {
+              const url = await uploadImageToImgbb(base64); // Llama a la función importada
+              if (url) {
+                setAvatarUrl(url);
+              } else {
+                setError("Error al subir la imagen");
+              }
+            } catch (error) {
+              console.error("Error en la solicitud:", error);
+              setError("Error en la solicitud");
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+    } else {
+      // Manejo para dispositivos móviles (iOS/Android)
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        alert("Se requieren permisos para acceder a la galería.");
+        return;
       }
-    };
-    input.click();
-  } else {
-    // Manejo para dispositivos móviles (iOS/Android)
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      alert("Se requieren permisos para acceder a la galería.");
-      return;
+
+      Alert.alert(
+        "Seleccionar imagen",
+        "Elige una opción",
+        [
+          {
+            text: "Tomar foto",
+            onPress: async () => {
+              const { status } =
+                await ImagePicker.requestCameraPermissionsAsync();
+              if (status !== "granted") {
+                alert("Se requieren permisos para acceder a la cámara.");
+                return;
+              }
+
+              const result = await ImagePicker.launchCameraAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 1,
+                base64: true,
+              });
+
+              if (!result.canceled) {
+                const base64 = result.assets[0].base64;
+                try {
+                  const url = await uploadImageToImgbb(base64);
+                  if (url) {
+                    setAvatarUrl(url);
+                  } else {
+                    setError("Error al subir la imagen");
+                  }
+                } catch (error) {
+                  console.error("Error en la solicitud:", error);
+                  setError("Error en la solicitud");
+                }
+              }
+            },
+          },
+          {
+            text: "Elegir de la galería",
+            onPress: async () => {
+              const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 1,
+                base64: true,
+              });
+
+              if (!result.canceled) {
+                const base64 = result.assets[0].base64;
+                try {
+                  const url = await uploadImageToImgbb(base64);
+                  if (url) {
+                    setAvatarUrl(url);
+                  } else {
+                    setError("Error al subir la imagen");
+                  }
+                } catch (error) {
+                  console.error("Error en la solicitud:", error);
+                  setError("Error en la solicitud");
+                }
+              }
+            },
+          },
+          {
+            text: "Cancelar",
+            style: "cancel",
+          },
+        ],
+        { cancelable: true }
+      );
     }
-
-    Alert.alert(
-      "Seleccionar imagen",
-      "Elige una opción",
-      [
-        {
-          text: "Tomar foto",
-          onPress: async () => {
-            const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            if (status !== "granted") {
-              alert("Se requieren permisos para acceder a la cámara.");
-              return;
-            }
-
-            const result = await ImagePicker.launchCameraAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
-              aspect: [4, 3],
-              quality: 1,
-            });
-
-            if (!result.canceled) {
-              const base64 = await FileSystem.readAsStringAsync(result.uri, {
-                encoding: FileSystem.EncodingType.Base64,
-              });
-              setAvatar(`data:image/jpeg;base64,${base64}`);
-              console.log("Imagen seleccionada desde la cámara:", base64);
-            }
-          },
-        },
-        {
-          text: "Elegir de la galería",
-          onPress: async () => {
-            const result = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
-              aspect: [4, 3],
-              quality: 1,
-            });
-
-            if (!result.canceled) {
-              const base64 = await FileSystem.readAsStringAsync(result.uri, {
-                encoding: FileSystem.EncodingType.Base64,
-              });
-              setAvatar(`data:image/jpeg;base64,${base64}`);
-              console.log("Imagen seleccionada desde la galería:", base64);
-            }
-          },
-        },
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
-      ],
-      { cancelable: true }
-    );
-  }
-};
-
+  };
 
   return (
     <View style={styles.container}>
@@ -202,11 +229,7 @@ const selectImage = async () => {
       </View>
       <Pressable onPress={selectImage}>
         <Image
-          source={
-            avatar
-              ? { uri: avatar }
-              : defaultAvatar
-          }
+          source={avatarUrl ? { uri: avatarUrl } : defaultAvatar}
           style={styles.image}
         />
       </Pressable>

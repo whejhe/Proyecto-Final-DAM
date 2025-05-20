@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'; // Importa Bottom Tab Navigator
 import { NavigationContainer } from "@react-navigation/native";
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -13,8 +15,20 @@ import FichaConcurso from './pages/FichaConcurso';
 import { FIRESTORE_DB } from './config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Importa Ionicons (o cualquier otro conjunto de iconos)
 
 const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator(); // Crea un Bottom Tab Navigator
+
+function HomeStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="Home" component={Home} />
+      <Stack.Screen name="ListadoConcursos" component={ListadoConcursos} />
+      <Stack.Screen name="FichaConcurso" component={FichaConcurso} />
+    </Stack.Navigator>
+  );
+}
 
 export default function App() {
 
@@ -45,26 +59,48 @@ export default function App() {
   
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="Register" component={Register} />
-        <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-        <Stack.Screen name="Home" component={Home} />
-        <Stack.Screen name="ListadoConcursos" component={ListadoConcursos} />
-        <Stack.Screen name="FichaConcurso" component={FichaConcurso} />
-         {isAdmin ? (
-          <Stack.Screen name="PanelAdmin" component={PanelAdmin} />
-        ) : null}
-        <Stack.Screen name="Perfil">
-          {(props) =>
-            currentUser ? (
-              <Perfil {...props} user={currentUser} />
-            ) : (
-              <Text>Cargando...</Text>
-            )
-          }
-        </Stack.Screen>
-      </Stack.Navigator>
+      {currentUser ? (
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            tabBarIcon: ({ focused, color, size }) => {
+              let iconName;
+
+              if (route.name === 'HomeTab') {
+                iconName = focused
+                  ? 'home'
+                  : 'home-outline';
+              } else if (route.name === 'Perfil') {
+                iconName = focused ? 'person' : 'person-outline';
+              }
+
+              // Puedes retornar cualquier componente que quieras aquí!
+              return <Ionicons name={iconName} size={size} color={color} />;
+            },
+            tabBarActiveTintColor: 'tomato',
+            tabBarInactiveTintColor: 'gray',
+          })}
+        >
+          <Tab.Screen name="HomeTab" component={HomeStack} options={{ headerShown: false }} />
+          <Tab.Screen name="Perfil">
+            {(props) =>
+              currentUser ? (
+                <Perfil {...props} user={currentUser} />
+              ) : (
+                <Text>Cargando...</Text>
+              )
+            }
+          </Tab.Screen>
+          {isAdmin && (
+            <Tab.Screen name="PanelAdmin" component={PanelAdmin} />
+          )}
+        </Tab.Navigator>
+      ) : (
+        <Stack.Navigator initialRouteName="Login">
+          <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="Register" component={Register} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+        </Stack.Navigator>
+      )}
     </NavigationContainer>
   );
 }

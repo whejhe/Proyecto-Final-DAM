@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { FIREBASE_AUTH, FIRESTORE_DB } from "../config/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { signOut } from "firebase/auth";
 import * as ImagePicker from "expo-image-picker";
 import uploadImageToImgbb from "../services/imageService"; // Importa la función correctamente
 
@@ -33,6 +34,16 @@ const Perfil = () => {
     };
     obtenerUsuario();
   }, []);
+
+  const handleLogout = () => {
+      signOut(FIREBASE_AUTH)
+        .then(() => {
+          navigation.navigate("Login");
+        })
+        .catch((error) => {
+          console.error("Error al cerrar sesión:", error);
+        });
+    };
 
   const selectImage = async () => {
     if (Platform.OS === "web") {
@@ -178,6 +189,9 @@ const Perfil = () => {
       <Text style={styles.createdAt}>
         {usuario?.createdAt.toDate().toLocaleString()}
       </Text>
+      <Pressable style={styles.button} onPress={handleLogout}>
+              <Text style={styles.textButton}>Logout</Text>
+      </Pressable>
     </View>
   );
 };
@@ -211,6 +225,17 @@ const styles = StyleSheet.create({
   createdAt: {
     fontSize: 14,
     color: "#666",
+  },
+  button: {
+    backgroundColor: "black",
+    padding: 10,
+    textAlign: "center",
+    marginTop: 20,
+    borderRadius: 5,
+  },
+  textButton: {
+    color: "white",
+    fontSize: 18,
   },
 });
 

@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { FIREBASE_AUTH, FIRESTORE_DB } from "../config/firebase";
-// import { signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 
 const Home = () => {

@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'; // Importa Bottom Tab Navigator
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from "@react-navigation/native";
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -9,16 +8,16 @@ import Home from './pages/Home';
 import PanelAdmin from './pages/PanelAdmin';
 import ForgotPassword from './pages/ForgotPassword';
 import Perfil from './pages/Perfil';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth'; // Importa signOut
 import ListadoConcursos from './pages/ListadoConcursos';
 import FichaConcurso from './pages/FichaConcurso';
 import { FIRESTORE_DB } from './config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Importa Ionicons (o cualquier otro conjunto de iconos)
+import { Ionicons } from '@expo/vector-icons';
 
 const Stack = createStackNavigator();
-const Tab = createBottomTabNavigator(); // Crea un Bottom Tab Navigator
+const Tab = createBottomTabNavigator();
 
 function HomeStack() {
   return (
@@ -34,6 +33,19 @@ export default function App() {
 
   const [currentUser, setCurrentUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  //const navigation = useNavigation(); // Elimina esta línea
+
+  const handleLogout = () => { // Mueve la función handleLogout a App.js
+    signOut(getAuth())
+      .then(() => {
+        //navigation.navigate("Login"); // Navega a Login
+        setCurrentUser(null); // Establece currentUser a null para mostrar el Stack Navigator de autenticación
+      })
+      .catch((error) => {
+        console.error("Error al cerrar sesión:", error);
+      });
+  };
 
   useEffect(() => {
     const auth = getAuth();
@@ -84,7 +96,7 @@ export default function App() {
           <Tab.Screen name="Perfil">
             {(props) =>
               currentUser ? (
-                <Perfil {...props} user={currentUser} />
+                <Perfil {...props} user={currentUser} onLogout={handleLogout} /> // Pasa handleLogout como prop
               ) : (
                 <Text>Cargando...</Text>
               )

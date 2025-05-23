@@ -22,10 +22,25 @@ export const registerUser = async (email, password, name, avatar) => {
 };
 
 // Función para iniciar sesión
+// export const loginUser = async (email, password) => {
+//   try {
+//     const userCredential = await signInWithEmailAndPassword(FIREBASE_AUTH, email, password);
+//     const user = userCredential.user;
+//     return { success: true, user };
+//   } catch (error) {
+//     return { success: false, error: error.message };
+//   }
+// };
 export const loginUser = async (email, password) => {
   try {
     const userCredential = await signInWithEmailAndPassword(FIREBASE_AUTH, email, password);
     const user = userCredential.user;
+    // Comprobar si está bloqueado
+    const blockedDoc = await getDoc(doc(FIRESTORE_DB, 'blockedUsers', user.uid));
+    if (blockedDoc.exists()) {
+      await signOut(FIREBASE_AUTH);
+      return { success: false, error: 'Usuario bloqueado. Contacta con el administrador.' };
+    }
     return { success: true, user };
   } catch (error) {
     return { success: false, error: error.message };

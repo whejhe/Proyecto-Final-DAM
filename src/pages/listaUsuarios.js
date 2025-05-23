@@ -2,83 +2,76 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Alert } from 'react-native';
 import { ListItem, Avatar, Button } from 'react-native-elements';
 import { FIRESTORE_DB } from '../config/firebase';
-import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, getDoc} from 'firebase/firestore';
 import { Platform } from 'react-native';
 
 const ListaUsuarios = () => {
   const [usuarios, setUsuarios] = useState([]);
 
+  const bloquearUsuario = async (userId) => {
+  try {
+    await setDoc(doc(FIRESTORE_DB, 'blockedUsers', userId), { blocked: true });
+    setUsuarios(usuarios.map(u => u.id === userId ? { ...u, blocked: true } : u));
+  } catch (error) {
+    alert('Error al bloquear usuario');
+  }
+};
+
+const desbloquearUsuario = async (userId) => {
+  try {
+    await deleteDoc(doc(FIRESTORE_DB, 'blockedUsers', userId));
+    setUsuarios(usuarios.map(u => u.id === userId ? { ...u, blocked: false } : u));
+  } catch (error) {
+    alert('Error al desbloquear usuario');
+  }
+};
+
   const obtenerUsuarios = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(FIRESTORE_DB, 'users'));
-      const usuariosData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setUsuarios(usuariosData);
-    } catch (error) {
-      console.error('Error al obtener usuarios:', error);
-    }
-  };
+  try {
+    const querySnapshot = await getDocs(collection(FIRESTORE_DB, 'users'));
+    const blockedSnapshot = await getDocs(collection(FIRESTORE_DB, 'blockedUsers'));
+    const blockedIds = blockedSnapshot.docs.map(doc => doc.id);
+    const usuariosData = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      blocked: blockedIds.includes(doc.id),
+    }));
+    setUsuarios(usuariosData);
+  } catch (error) {
+    console.error('Error al obtener usuarios:', error);
+  }
+};
 
   useEffect(() => {
     obtenerUsuarios();
   }, []);
 
-  const eliminarUsuario = async (userId) => {
-    if (Platform.OS === 'web') {
-      // Usar confirm en web
-      if (window.confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
-        try {
-          await deleteDoc(doc(FIRESTORE_DB, 'users', userId));
-          setUsuarios(usuarios.filter(user => user.id !== userId));
-        } catch (error) {
-          console.error('Error al eliminar usuario:', error);
-          window.alert('No se pudo eliminar el usuario.');
-        }
-      }
-    } else {
-      // Usar Alert en móvil
-      Alert.alert(
-        'Eliminar usuario',
-        '¿Estás seguro de que deseas eliminar este usuario?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Eliminar',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await deleteDoc(doc(FIRESTORE_DB, 'users', userId));
-                setUsuarios(usuarios.filter(user => user.id !== userId));
-              } catch (error) {
-                console.error('Error al eliminar usuario:', error);
-                Alert.alert('Error', 'No se pudo eliminar el usuario.');
-              }
-            }
-          }
-        ]
-      );
-    }
-  };
 
   const renderItem = ({ item }) => (
-    <ListItem bottomDivider>
-      <Avatar
-        rounded
-        source={item.avatar ? { uri: item.avatar } : require('../../assets/avatars/default-User.png')}
-      />
-      <ListItem.Content>
-        <ListItem.Title>{item.name}</ListItem.Title>
-        <ListItem.Subtitle>{item.email}</ListItem.Subtitle>
-      </ListItem.Content>
+  <ListItem bottomDivider>
+    <Avatar
+      rounded
+      source={item.avatar ? { uri: item.avatar } : require('../../assets/avatars/default-User.png')}
+    />
+    <ListItem.Content>
+      <ListItem.Title>{item.name}</ListItem.Title>
+      <ListItem.Subtitle>{item.email}</ListItem.Subtitle>
+    </ListItem.Content>
+    {item.blocked ? (
       <Button
-        title="Eliminar"
-        onPress={() => eliminarUsuario(item.id)}
-        buttonStyle={{ backgroundColor: 'red' }}
+        title="Desbloquear"
+        onPress={() => desbloquearUsuario(item.id)}
+        buttonStyle={{ backgroundColor: 'green' }}
       />
-    </ListItem>
-  );
+    ) : (
+      <Button
+        title="Bloquear"
+        onPress={() => bloquearUsuario(item.id)}
+        buttonStyle={{ backgroundColor: 'orange' }}
+      />
+    )}
+  </ListItem>
+);
 
   return (
     <View style={styles.container}>

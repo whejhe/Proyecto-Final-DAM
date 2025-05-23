@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { View, TextInput, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { loginUser } from '../services/authService'; // Importa la función loginUser
+import { getDoc, doc } from 'firebase/firestore';
+
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigation = useNavigation();
+
 
   const handleLogin = async () => {
     const { success, user, error: loginError } = await loginUser(email, password);

@@ -1,0 +1,64 @@
+import { FIREBASE_AUTH, FIRESTORE_DB } from '../config/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { setDoc, doc, getDoc } from 'firebase/firestore';
+
+// Función para registrar un usuario
+export const registerUser = async (email, password, name) => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(FIREBASE_AUTH, email, password);
+    const user = userCredential.user;
+
+    // Guarda el UID del usuario en Firestore
+    await setDoc(doc(FIRESTORE_DB, 'users', user.uid), {
+      uid: user.uid,
+      name: name,
+      email: email,
+      role: [],
+      createdAt: new Date(),
+      avatar: null,
+    });
+
+    return { success: true, user };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+// Función para iniciar sesión
+export const loginUser = async (email, password) => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(FIREBASE_AUTH, email, password);
+    const user = userCredential.user;
+    return { success: true, user };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+// Función para cerrar sesión
+export const logoutUser = async () => {
+  try {
+    await signOut(FIREBASE_AUTH);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+// Función para verificar si el usuario es administrador
+export const isAdmin = async (userId) => {
+  try {
+    const userRef = doc(FIRESTORE_DB, 'users', userId);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      return userData?.role?.includes('admin');
+    } else {
+      return false;
+    }
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    return false;
+  }
+};

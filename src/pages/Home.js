@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -42,7 +41,12 @@ const Home = () => {
         <br />
         ¡Inspírate, compite y gana!
       </Text>
-
+      <Pressable
+        style={styles.button}
+        onPress={() => navigation.navigate("ListadoConcursos")}
+      >
+        <Text style={styles.buttonText}>Ver Concursos</Text>
+      </Pressable>
     </View>
   );
 };
@@ -62,7 +66,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     marginBottom: 20,
-  }
+  },
+  button: {
+    backgroundColor: "black",
+    padding: 10,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+  },
 });
 
 export default Home;

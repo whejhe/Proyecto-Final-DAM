@@ -1,35 +1,31 @@
 import React, { useState } from 'react';
 import { View, TextInput, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { FIREBASE_AUTH } from '../config/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { loginUser } from '../services/authService'; // Importa la función loginUser
 
-const Login = () => {
+export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigation = useNavigation();
 
-  const handleLogin = () => {
-    if (email === '' || password === '') {
-      setError('Por favor, completa todos los campos');
+  const handleLogin = async () => {
+    const { success, user, error: loginError } = await loginUser(email, password);
+
+    if (success) {
+      console.log('Usuario autenticado:', email);
+      setError('');
+      // No necesitas navegar aquí, App.js detectará el cambio en currentUser
     } else {
-      signInWithEmailAndPassword(FIREBASE_AUTH, email, password)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          console.log('Sesión iniciada con:', user.email);
-          setError('');
-          //navigation.navigate('HomeTab'); // Elimina esta línea
-        })
-        .catch((error) => {
-          setError(error.message);
-        });
+      setError(loginError);
+      console.error("Login failed", loginError);
     }
   };
 
   return (
     <View style={styles.container}>
       <Image source={require('../../assets/login.png')} style={styles.image} />
+      <Text style={styles.title}>Login</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <TextInput
         style={styles.input}
@@ -46,17 +42,17 @@ const Login = () => {
         secureTextEntry
       />
       <Pressable onPress={handleLogin}>
-        <Text style={styles.Button}>Login</Text>
-      </Pressable>
-      <Pressable onPress={() => navigation.navigate('ForgotPassword')}>
-        <Text style={{ textAlign: 'center', color: 'blue', paddingBottom: 20 }}>Forgot password?</Text>
+        <Text style={styles.button}>Login</Text>
       </Pressable>
       <Pressable onPress={() => navigation.navigate('Register')}>
-        <Text style={{ textAlign: 'center', color: 'blue' }}>Create account</Text>
+        <Text style={{ textAlign: 'center', color: 'blue' }}>Don't have an account? Register</Text>
+      </Pressable>
+      <Pressable onPress={() => navigation.navigate('ForgotPassword')}>
+        <Text style={{ textAlign: 'center', color: 'blue' }}>Forgot Password?</Text>
       </Pressable>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -83,7 +79,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: 'center',
   },
-  Button: {
+  button: {
     backgroundColor: 'black',
     color: 'white',
     padding: 10,
@@ -101,5 +97,3 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 });
-
-export default Login;

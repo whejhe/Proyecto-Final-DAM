@@ -1,240 +1,63 @@
-import React, { useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  Pressable,
-  View,
-  Image,
-  Alert,
-  Platform,
-} from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { FIREBASE_AUTH, FIRESTORE_DB } from "../config/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import Ionicons from "react-native-vector-icons/Ionicons";
-import * as ImagePicker from "expo-image-picker";
-import uploadImageToImgbb from "../services/imageService"; // Importa la función correctamente
+import React, { useState } from 'react';
+import { View, TextInput, Text, StyleSheet, Pressable, Image } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { registerUser } from '../services/authService'; // Importa la función registerUser
 
 export default function Register() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [name, setName] = useState("");
-  const [avatar, setAvatar] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState(null);
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
   const navigation = useNavigation();
 
-  const defaultAvatar = require("../../assets/avatars/default-User.png");
-
   const handleRegister = async () => {
-    if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden");
+    if (email === '' || password === '' || name === '') {
+      setError('Por favor, completa todos los campos');
       return;
     }
 
-    createUserWithEmailAndPassword(FIREBASE_AUTH, email, password)
-      .then(async (userCredential) => {
-        const user = userCredential.user;
-        console.log("Usuario registrado:", user.email);
+    const { success, user, error: registerError } = await registerUser(email, password, name);
 
-        await setDoc(doc(FIRESTORE_DB, "users", user.uid), {
-          name: name,
-          email: email,
-          avatar: avatarUrl || null,
-          role: ["user"],
-          createdAt: serverTimestamp(),
-        });
-
-        setError("");
-        navigation.navigate("Login");
-        console.log("Registro exitoso. Avatar almacenado en Base64.");
-      })
-      .catch((error) => {
-        setError(error.message);
-      });
-  };
-
-  const selectImage = async () => {
-    if (Platform.OS === "web") {
-      // Manejo para la web
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
-      input.onchange = async (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = async () => {
-            const base64 = reader.result.split(",")[1];
-
-            try {
-              const url = await uploadImageToImgbb(base64); // Llama a la función importada
-              if (url) {
-                setAvatarUrl(url);
-              } else {
-                setError("Error al subir la imagen");
-              }
-            } catch (error) {
-              console.error("Error en la solicitud:", error);
-              setError("Error en la solicitud");
-            }
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-      input.click();
+    if (success) {
+      console.log('Usuario registrado:', email);
+      setError('');
+      navigation.navigate('Login');
     } else {
-      // Manejo para dispositivos móviles (iOS/Android)
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        alert("Se requieren permisos para acceder a la galería.");
-        return;
-      }
-
-      Alert.alert(
-        "Seleccionar imagen",
-        "Elige una opción",
-        [
-          {
-            text: "Tomar foto",
-            onPress: async () => {
-              const { status } =
-                await ImagePicker.requestCameraPermissionsAsync();
-              if (status !== "granted") {
-                alert("Se requieren permisos para acceder a la cámara.");
-                return;
-              }
-
-              const result = await ImagePicker.launchCameraAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: [4, 3],
-                quality: 1,
-                base64: true,
-              });
-
-              if (!result.canceled) {
-                const base64 = result.assets[0].base64;
-                try {
-                  const url = await uploadImageToImgbb(base64);
-                  if (url) {
-                    setAvatarUrl(url);
-                  } else {
-                    setError("Error al subir la imagen");
-                  }
-                } catch (error) {
-                  console.error("Error en la solicitud:", error);
-                  setError("Error en la solicitud");
-                }
-              }
-            },
-          },
-          {
-            text: "Elegir de la galería",
-            onPress: async () => {
-              const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: [4, 3],
-                quality: 1,
-                base64: true,
-              });
-
-              if (!result.canceled) {
-                const base64 = result.assets[0].base64;
-                try {
-                  const url = await uploadImageToImgbb(base64);
-                  if (url) {
-                    setAvatarUrl(url);
-                  } else {
-                    setError("Error al subir la imagen");
-                  }
-                } catch (error) {
-                  console.error("Error en la solicitud:", error);
-                  setError("Error en la solicitud");
-                }
-              }
-            },
-          },
-          {
-            text: "Cancelar",
-            style: "cancel",
-          },
-        ],
-        { cancelable: true }
-      );
+      setError(registerError);
+      console.error("Registration failed", registerError);
     }
   };
 
   return (
     <View style={styles.container}>
+      <Image source={require('../../assets/avatars/default-User.png')} style={styles.image} />
+      <Text style={styles.title}>Create Account</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <TextInput
         style={styles.input}
-        placeholder="Nombre"
+        placeholder="Name"
         value={name}
         onChangeText={setName}
       />
       <TextInput
         style={styles.input}
-        placeholder="Correo Electronico"
+        placeholder="Email"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
-        autoCapitalize="none"
       />
-      <View style={styles.passwordContainer}>
-        <TextInput
-          style={styles.passwordInput}
-          placeholder="Contraseña"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={!showPassword}
-        />
-        <Pressable
-          onPress={() => setShowPassword(!showPassword)}
-          style={styles.icon}
-        >
-          <Ionicons
-            name={showPassword ? "eye-off" : "eye"}
-            size={20}
-            color="gray"
-          />
-        </Pressable>
-      </View>
-      <View style={styles.passwordContainer}>
-        <TextInput
-          style={styles.passwordInput}
-          placeholder="Confirmar Contraseña"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry={!showConfirmPassword}
-        />
-        <Pressable
-          onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-          style={styles.icon}
-        >
-          <Ionicons
-            name={showConfirmPassword ? "eye-off" : "eye"}
-            size={20}
-            color="gray"
-          />
-        </Pressable>
-      </View>
-      <Pressable onPress={selectImage}>
-        <Image
-          source={avatarUrl ? { uri: avatarUrl } : defaultAvatar}
-          style={styles.image}
-        />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      <Pressable onPress={handleRegister}>
+        <Text style={styles.button}>Register</Text>
       </Pressable>
-      <Pressable style={styles.button} onPress={handleRegister}>
-        <Text style={styles.textButton}>Register</Text>
+      <Pressable onPress={() => navigation.navigate('Login')}>
+        <Text style={{ textAlign: 'center', color: 'blue' }}>Already have an account? Login</Text>
       </Pressable>
     </View>
   );
@@ -243,68 +66,43 @@ export default function Register() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     padding: 16,
   },
   title: {
     fontSize: 24,
     marginBottom: 20,
+    textAlign: 'center',
   },
   input: {
     height: 40,
-    borderColor: "gray",
+    borderColor: 'gray',
     borderWidth: 1,
     marginBottom: 12,
     paddingHorizontal: 8,
-    marginHorizontal: 20,
-  },
-  passwordContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: 20,
-    marginBottom: 12,
-    position: "relative",
-  },
-  passwordInput: {
-    flex: 1,
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
-    paddingHorizontal: 8,
-  },
-  icon: {
-    padding: 10,
-    position: "absolute",
-    right: 0,
+    marginLeft: 20,
+    marginRight: 20,
   },
   error: {
-    color: "red",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  image: {
-    width: 100,
-    height: 100,
-    alignSelf: "center",
-    marginBottom: 20,
+    color: 'red',
+    marginBottom: 12,
+    textAlign: 'center',
   },
   button: {
-    backgroundColor: "black",
+    backgroundColor: 'black',
+    color: 'white',
     padding: 10,
-    textAlign: "center",
+    fontSize: 18,
+    textAlign: 'center',
     marginBottom: 12,
-    marginHorizontal: 20,
+    marginLeft: 20,
+    marginRight: 20,
     borderRadius: 5,
   },
-  textButton: {
-    color: "white",
-    fontSize: 18,
-    textAlign: "center",
-  },
-  showPasswordButton: {
-    color: "blue",
-    textAlign: "right",
-    marginRight: 20,
-    marginBottom: 12,
+  image: {
+    width: 120,
+    height: 150,
+    alignSelf: 'center',
+    marginBottom: 20,
   },
 });

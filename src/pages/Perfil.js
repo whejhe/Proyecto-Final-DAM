@@ -12,14 +12,11 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { FIREBASE_AUTH, FIRESTORE_DB } from "../config/firebase";
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import { reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
-import { deleteUser } from "firebase/auth"; // Importa deleteUser
-import { signOut } from "firebase/auth";
+import { reauthenticateWithCredential, EmailAuthProvider, deleteUser, signOut } from "firebase/auth";
 import * as ImagePicker from "expo-image-picker";
-import uploadImageToImgbb from "../services/imageService"; // Importa la función correctamente
+import uploadImageToImgbb from "../services/imageService";
 
 const Perfil = ({ onLogout }) => {
-  // Recibe onLogout como prop
   const navigation = useNavigation();
   const [error, setError] = useState(null);
   const [usuario, setUsuario] = useState(null);
@@ -35,7 +32,6 @@ const Perfil = ({ onLogout }) => {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const userData = docSnap.data();
-          console.log("Datos del usuario al entrar al perfil:", userData); // Añade este console.log
           setUsuario(userData);
           if (userData.avatar) {
             setImagenAvatar(userData.avatar);
@@ -49,16 +45,14 @@ const Perfil = ({ onLogout }) => {
   const handleLogout = async () => {
     try {
       await signOut(FIREBASE_AUTH);
-      onLogout(); // Llama a la función onLogout pasada como prop
+      onLogout();
     } catch (error) {
-      console.error("Error signing out:", error);
-      // Opcional: mostrar un mensaje de error al usuario si el logout falla
+      setError("Error al cerrar sesión");
     }
   };
 
   const selectImage = async () => {
     if (Platform.OS === "web") {
-      // Manejo para la web
       const input = document.createElement("input");
       input.type = "file";
       input.accept = "image/*";
@@ -68,22 +62,18 @@ const Perfil = ({ onLogout }) => {
           const reader = new FileReader();
           reader.onload = async () => {
             const base64 = reader.result.split(",")[1];
-
             try {
-              const url = await uploadImageToImgbb(base64); // Llama a la función importada
+              const url = await uploadImageToImgbb(base64);
               if (url) {
                 setImagenAvatar(url);
                 await updateDoc(
                   doc(FIRESTORE_DB, "users", FIREBASE_AUTH.currentUser.uid),
-                  {
-                    avatar: url,
-                  }
+                  { avatar: url }
                 );
               } else {
                 setError("Error al subir la imagen");
               }
             } catch (error) {
-              console.error("Error en la solicitud:", error);
               setError("Error en la solicitud");
             }
           };
@@ -92,14 +82,11 @@ const Perfil = ({ onLogout }) => {
       };
       input.click();
     } else {
-      // Manejo para dispositivos móviles (iOS/Android)
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
         alert("Se requieren permisos para acceder a la galería.");
         return;
       }
-
       Alert.alert(
         "Seleccionar imagen",
         "Elige una opción",
@@ -107,13 +94,11 @@ const Perfil = ({ onLogout }) => {
           {
             text: "Tomar foto",
             onPress: async () => {
-              const { status } =
-                await ImagePicker.requestCameraPermissionsAsync();
+              const { status } = await ImagePicker.requestCameraPermissionsAsync();
               if (status !== "granted") {
                 alert("Se requieren permisos para acceder a la cámara.");
                 return;
               }
-
               const result = await ImagePicker.launchCameraAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
@@ -121,25 +106,20 @@ const Perfil = ({ onLogout }) => {
                 quality: 1,
                 base64: true,
               });
-
               if (!result.canceled) {
                 const base64 = result.assets[0].base64;
                 try {
                   const url = await uploadImageToImgbb(base64);
                   if (url) {
                     setImagenAvatar(url);
-                    // Actualiza el avatar en Firestore
                     await updateDoc(
                       doc(FIRESTORE_DB, "users", FIREBASE_AUTH.currentUser.uid),
-                      {
-                        avatar: url,
-                      }
+                      { avatar: url }
                     );
                   } else {
                     setError("Error al subir la imagen");
                   }
                 } catch (error) {
-                  console.error("Error en la solicitud:", error);
                   setError("Error en la solicitud");
                 }
               }
@@ -155,25 +135,20 @@ const Perfil = ({ onLogout }) => {
                 quality: 1,
                 base64: true,
               });
-
               if (!result.canceled) {
                 const base64 = result.assets[0].base64;
                 try {
                   const url = await uploadImageToImgbb(base64);
                   if (url) {
                     setImagenAvatar(url);
-                    // Actualiza el avatar en Firestore
                     await updateDoc(
                       doc(FIRESTORE_DB, "users", FIREBASE_AUTH.currentUser.uid),
-                      {
-                        avatar: url,
-                      }
+                      { avatar: url }
                     );
                   } else {
                     setError("Error al subir la imagen");
                   }
                 } catch (error) {
-                  console.error("Error en la solicitud:", error);
                   setError("Error en la solicitud");
                 }
               }
@@ -190,75 +165,36 @@ const Perfil = ({ onLogout }) => {
   };
 
   const handleDeleteAccount = () => {
-    console.log("handleDeleteAccount se ha ejecutado");
-    Alert.alert(
-      "Eliminar cuenta",
-      "¿Estás seguro de que quieres eliminar tu cuenta? Esta acción es irreversible. Por favor, confirma tu contraseña.",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel",
-          onPress: () => setPassword(""),
-        },
-        {
-          text: "Continuar",
-          style: "destructive",
-          onPress: () => {
-            setError(null);
-            console.log("showPasswordPrompt antes:", showPasswordPrompt); // Añade este console.log
-            setShowPasswordPrompt(true);
-            console.log("showPasswordPrompt después:", showPasswordPrompt); // Añade este console.log
-          },
-        },
-      ],
-      { cancelable: false }
-    );
+    setError(null);
+    setShowPasswordPrompt(true);
   };
 
   const confirmDeletionWithPassword = async () => {
-    console.log("confirmDeletionWithPassword se ha ejecutado"); // Añade este console.log
     const user = FIREBASE_AUTH.currentUser;
-
-    // Validación básica: asegurar que hay usuario y contraseña ingresada
     if (!user || !user.email || !password) {
       setError("Usuario no autenticado o contraseña no proporcionada.");
       setShowPasswordPrompt(false);
       setPassword("");
-      console.log(
-        "Error: Usuario no autenticado o contraseña no proporcionada."
-      ); // Añade este console.log
       return;
     }
-
     try {
-      console.log("Intentando reautenticar...");
+      // Reautenticación necesaria para eliminar el usuario en web y móvil
       const credential = EmailAuthProvider.credential(user.email, password);
       await reauthenticateWithCredential(user, credential);
-      console.log("Usuario reautenticado con éxito.");
 
-      // Si la reautenticación fue exitosa, procedemos con la eliminación
+      // Elimina el documento de Firestore
+      await deleteDoc(doc(FIRESTORE_DB, "users", user.uid));
+
+      // Elimina el usuario de Auth
+      await deleteUser(user);
+
       setShowPasswordPrompt(false);
       setPassword("");
-
-      console.log("Borrando datos de Firestore...");
-      const userRef = doc(FIRESTORE_DB, "users", user.uid);
-      await deleteDoc(userRef);
-      console.log("Datos de Firestore borrados.");
-
-      console.log("Borrando usuario de Firebase Auth...");
-      await deleteUser(user); // Esto ahora debería funcionar después de la reautenticación
-      console.log("Usuario de Firebase Auth borrado.");
-
-      console.log("Cuenta eliminada correctamente");
-      onLogout(); // Esto se llama después de una eliminación exitosa (Auth también cierra sesión)
+      onLogout();
     } catch (error) {
-      console.error("Error al eliminar la cuenta:", error);
-      // Maneja los errores de reautenticación o eliminación aquí
-      // Por ejemplo, error.code === 'auth/wrong-password' para contraseña incorrecta
       setShowPasswordPrompt(false);
       setPassword("");
-      setError(`Error: ${error.message}`);
-      console.log("Error al eliminar la cuenta:", error.message); // Añade este console.log
+      setError(`Error al eliminar la cuenta: ${error.message}`);
     }
   };
 
@@ -277,10 +213,11 @@ const Perfil = ({ onLogout }) => {
       <Text style={styles.nombre}>{usuario?.name}</Text>
       <Text style={styles.correo}>{usuario?.email}</Text>
       <Text style={styles.role}>{usuario?.role}</Text>
-      {/* Asegúrate de que usuario.createdAt existe antes de llamar a toDate */}
       {usuario?.createdAt && (
         <Text style={styles.createdAt}>
-          {usuario.createdAt.toDate().toLocaleString()}
+          {usuario.createdAt.toDate
+            ? usuario.createdAt.toDate().toLocaleString()
+            : usuario.createdAt}
         </Text>
       )}
 
@@ -294,10 +231,8 @@ const Perfil = ({ onLogout }) => {
         <Text style={styles.textButton}>Eliminar cuenta</Text>
       </Pressable>
 
-      {/* Muestra el mensaje de error si existe */}
       {error && <Text style={styles.errorText}>{error}</Text>}
 
-      {/* --- INICIO DEL JSX DEL MODAL DE CONTRASEÑA (AHORA DENTRO DEL RETURN) --- */}
       {showPasswordPrompt && (
         <View style={styles.passwordPromptOverlay}>
           <View style={styles.passwordPromptContainer}>
@@ -307,9 +242,9 @@ const Perfil = ({ onLogout }) => {
               secureTextEntry
               value={password}
               onChangeText={setPassword}
-              placeholder="Contraseña" // Añadido placeholder
-              autoCapitalize="none" // Útil para campos de contraseña
-              keyboardType="default" // o 'email-address' dependiendo de la necesidad, pero default es común
+              placeholder="Contraseña"
+              autoCapitalize="none"
+              keyboardType="default"
             />
             <Pressable
               style={styles.button}
@@ -321,8 +256,8 @@ const Perfil = ({ onLogout }) => {
               style={[styles.button, styles.cancelButton]}
               onPress={() => {
                 setShowPasswordPrompt(false);
-                setPassword(""); // Limpia la contraseña al cancelar
-                setError(null); // Limpia el error al cancelar
+                setPassword("");
+                setError(null);
               }}
             >
               <Text style={styles.textButton}>Cancelar</Text>
@@ -330,7 +265,6 @@ const Perfil = ({ onLogout }) => {
           </View>
         </View>
       )}
-      {/* --- FIN DEL JSX DEL MODAL DE CONTRASEÑA --- */}
     </View>
   );
 };
@@ -341,7 +275,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
-    position: "relative", // Asegura que el overlay absoluto se posicione correctamente
+    position: "relative",
   },
   avatar: {
     width: 100,
@@ -365,17 +299,16 @@ const styles = StyleSheet.create({
   createdAt: {
     fontSize: 14,
     color: "#666",
-    marginBottom: 10, // Añadido un pequeño margen
+    marginBottom: 10,
   },
   button: {
     backgroundColor: "black",
     padding: 10,
-    // textAlign: "center", // textAlign no es una propiedad de View/Pressable, se usa en Text
-    alignItems: "center", // Centra el contenido (texto)
-    justifyContent: "center", // Centra el contenido (texto)
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 20,
     borderRadius: 5,
-    minWidth: 150, // Añade un ancho mínimo para que los botones se vean uniformes
+    minWidth: 150,
   },
   textButton: {
     color: "white",
@@ -385,27 +318,26 @@ const styles = StyleSheet.create({
     backgroundColor: "red",
     marginTop: 20,
   },
-  // --- NUEVOS ESTILOS PARA EL MODAL Y ERRORES ---
   passwordPromptOverlay: {
-    position: "absolute", // Para cubrir toda la pantalla
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.6)", // Fondo semi-transparente más oscuro para mayor contraste
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 1000, // Asegura que esté por encima de otros elementos
+    zIndex: 1000,
   },
   passwordPromptContainer: {
     backgroundColor: "white",
     padding: 20,
     borderRadius: 10,
-    alignItems: "center", // Centra los elementos dentro del modal
-    width: "80%", // O un ancho fijo
-    maxWidth: 350, // Ancho máximo un poco más grande
-    elevation: 10, // Añade sombra en Android
-    shadowColor: "#000", // Añade sombra en iOS
+    alignItems: "center",
+    width: "80%",
+    maxWidth: 350,
+    elevation: 10,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -415,22 +347,20 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     padding: 10,
     marginTop: 10,
-    marginBottom: 20, // Espacio antes de los botones
-    width: "100%", // Ocupa todo el ancho del contenedor
+    marginBottom: 20,
+    width: "100%",
     borderRadius: 5,
   },
   cancelButton: {
-    backgroundColor: "#666", // Un color gris para el botón cancelar
-    marginTop: 10, // Espacio entre los botones
+    backgroundColor: "#666",
+    marginTop: 10,
   },
   errorText: {
-    // Estilo para mostrar mensajes de error
     color: "red",
     marginTop: 10,
     textAlign: "center",
-    paddingHorizontal: 20, // Añade padding para que no toque los bordes
+    paddingHorizontal: 20,
   },
-  // --- FIN DE NUEVOS ESTILOS ---
 });
 
 export default Perfil;

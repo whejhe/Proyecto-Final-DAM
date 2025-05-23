@@ -3,21 +3,18 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } f
 import { setDoc, doc, getDoc } from 'firebase/firestore';
 
 // Función para registrar un usuario
-export const registerUser = async (email, password, name) => {
+export const registerUser = async (email, password, name, avatar) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(FIREBASE_AUTH, email, password);
     const user = userCredential.user;
-
-    // Guarda el UID del usuario en Firestore
     await setDoc(doc(FIRESTORE_DB, 'users', user.uid), {
       uid: user.uid,
       name: name,
       email: email,
       role: [],
       createdAt: new Date(),
-      avatar: null,
+      avatar: avatar || null,
     });
-
     return { success: true, user };
   } catch (error) {
     return { success: false, error: error.message };

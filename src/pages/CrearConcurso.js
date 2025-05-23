@@ -8,10 +8,6 @@ import { isAdmin } from '../services/authService';
 import { createContest } from '../services/contestService';
 import { formatDate } from '../services/dateService';
 
-import DateTimePicker from '@react-native-community/datetimepicker';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-
 const CrearConcurso = ({ currentUser }) => {
     const navigation = useNavigation();
 
@@ -27,6 +23,12 @@ const CrearConcurso = ({ currentUser }) => {
     const [isAdminUser, setIsAdminUser] = useState(false);
     const [showDatePickerInicio, setShowDatePickerInicio] = useState(false);
     const [showDatePickerFin, setShowDatePickerFin] = useState(false);
+
+    let DatePicker = null;
+    if (Platform.OS === 'web') {
+        DatePicker = require('react-datepicker').default;
+        require('react-datepicker/dist/react-datepicker.css');
+    }
 
     useEffect(() => {
         const checkAdminStatus = async () => {

@@ -35,10 +35,10 @@ const Home = () => {
       <Text style={styles.title}>📸 ¡Bienvenido a TuMejorToma!</Text>
       <Text style={styles.description}>
         Tu espacio para participar, votar y celebrar la mejor fotografía.
-        <br />
+        {'\n'}
         Explora concursos activos, sube tus mejores capturas y deja que el mundo
         las admire.
-        <br />
+        {'\n'}
         ¡Inspírate, compite y gana!
       </Text>
       <Pressable

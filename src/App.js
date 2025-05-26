@@ -8,7 +8,8 @@ import Home from "./pages/Home";
 import PanelAdmin from "./pages/PanelAdmin";
 import ForgotPassword from "./pages/ForgotPassword";
 import Perfil from "./pages/Perfil";
-import { getAuth, onAuthStateChanged } from "firebase/auth"; // Elimina signOut
+// import { getAuth, onAuthStateChanged } from "firebase/auth"; // Elimina signOut
+import { FIREBASE_AUTH, onAuthStateChanged } from './config/firebase';
 import ListadoConcursos from "./pages/ListadoConcursos";
 import FichaConcurso from "./pages/FichaConcurso";
 import { Text } from "react-native";
@@ -49,7 +50,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    const auth = getAuth();
+    // const auth = getAuth();
+    const auth = FIREBASE_AUTH;
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {

@@ -1,66 +1,81 @@
 import React, { useState } from 'react';
 import { View, TextInput, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { loginUser } from '../services/authService'; // Importa la función loginUser
-import Toast from 'react-native-toast-message'; // <--- Añadir importación
-
+import { loginUser } from '../services/authService';
+import Toast from 'react-native-toast-message';
+import { Formik } from 'formik';
+import { loginValidationSchema } from '../services/validationService';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState('');
   const navigation = useNavigation();
 
-
-  const handleLogin = async () => {
-    const { success, error: loginError } = await loginUser(email, password);
+  const handleLoginSubmit = async (values, { setSubmitting }) => {
+    setServerError('');
+    const { success, error: loginError } = await loginUser(values.email, values.password);
 
     if (success) {
-      console.log('Usuario autenticado:', email);
-      setError('');
-      // No necesitas navegar aquí, App.js detectará el cambio en currentUser
+      console.log('Usuario autenticado:', values.email);
     } else {
-      setError(loginError);
-      console.error("Login failed", loginError);
+      setServerError(loginError);
       Toast.show({
-        type: 'error', // tipo de toast (success, error, info)
-        text1: 'Error de Inicio de Sesión', // Título del toast
-        text2: loginError, // Mensaje del toast (el error devuelto por authService)
-        position: 'bottom', // Posición del toast
-        visibilityTime: 6000, // Duración en ms
+        type: 'error',
+        text1: 'Error de Inicio de Sesión',
+        text2: loginError,
+        position: 'bottom',
+        visibilityTime: 6000,
       });
     }
+    setSubmitting(false);
   };
 
   return (
-    <View style={styles.container}>
-      <Image source={require('../../assets/login.png')} style={styles.image} />
-      <Text style={styles.title}>Login</Text>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Pressable onPress={handleLogin}>
-        <Text style={styles.button}>Login</Text>
-      </Pressable>
-      <Pressable onPress={() => navigation.navigate('Register')}>
-        <Text style={{ textAlign: 'center', color: 'blue' }}>Don't have an account? Register</Text>
-      </Pressable>
-      <Pressable onPress={() => navigation.navigate('ForgotPassword')}>
-        <Text style={{ textAlign: 'center', color: 'blue' }}>Forgot Password?</Text>
-      </Pressable>
-    </View>
+    <Formik
+      initialValues={{ email: '', password: '' }}
+      validationSchema={loginValidationSchema}
+      onSubmit={handleLoginSubmit}
+    >
+      {({ handleChange, handleBlur, handleSubmit, values, errors, touched, isSubmitting }) => (
+        <View style={styles.container}>
+          <Image source={require('../../assets/login.png')} style={styles.image} />
+          <Text style={styles.title}>Login</Text>
+          
+          {serverError ? <Text style={styles.error}>{serverError}</Text> : null}
+          
+          <TextInput
+            style={[styles.input, (touched.email && errors.email) && styles.inputError]}
+            placeholder="Email"
+            value={values.email}
+            onChangeText={handleChange('email')}
+            onBlur={handleBlur('email')}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          {touched.email && errors.email && (<Text style={styles.errorText}>{errors.email}</Text>)}
+          
+          <TextInput
+            style={[styles.input, (touched.password && errors.password) && styles.inputError]}
+            placeholder="Password"
+            value={values.password}
+            onChangeText={handleChange('password')}
+            onBlur={handleBlur('password')}
+            secureTextEntry
+          />
+          {touched.password && errors.password && (<Text style={styles.errorText}>{errors.password}</Text>)}
+          
+          <Pressable onPress={handleSubmit} style={styles.buttonContainer} disabled={isSubmitting}>
+            <Text style={styles.buttonText}>{isSubmitting ? 'Ingresando...' : 'Login'}</Text>
+          </Pressable>
+          
+          <Pressable onPress={() => navigation.navigate('Register')} disabled={isSubmitting}>
+            <Text style={styles.linkText}>¿No tienes cuenta? Regístrate</Text>
+          </Pressable>
+          <Pressable onPress={() => navigation.navigate('ForgotPassword')} disabled={isSubmitting}>
+            <Text style={styles.linkText}>¿Olvidaste tu contraseña?</Text>
+          </Pressable>
+        </View>
+      )}
+    </Formik>
   );
 }
 
@@ -68,42 +83,64 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    padding: 16,
+    paddingHorizontal: 30,
+    backgroundColor: '#F5F5F5',
+  },
+  image: {
+    width: 100,
+    height: 120,
+    alignSelf: 'center',
+    marginBottom: 30,
   },
   title: {
-    fontSize: 24,
-    marginBottom: 20,
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 25,
     textAlign: 'center',
   },
   input: {
-    height: 40,
-    borderColor: 'gray',
+    height: 50,
+    borderColor: '#DDD',
     borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 8,
-    marginLeft: 20,
-    marginRight: 20,
+    borderRadius: 8,
+    marginBottom: 5,
+    paddingHorizontal: 15,
+    backgroundColor: '#FFF',
+    fontSize: 16,
+  },
+  inputError: {
+    borderColor: 'tomato',
   },
   error: {
     color: 'red',
-    marginBottom: 12,
+    marginBottom: 10,
     textAlign: 'center',
+    fontSize: 14,
   },
-  button: {
-    backgroundColor: 'black',
+  errorText: {
+    color: 'tomato',
+    fontSize: 13,
+    marginBottom: 10,
+    paddingLeft: 5,
+  },
+  buttonContainer: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 15,
+    marginBottom: 12,
+  },
+  buttonText: {
     color: 'white',
-    padding: 10,
     fontSize: 18,
-    textAlign: 'center',
-    marginBottom: 12,
-    marginLeft: 20,
-    marginRight: 20,
-    borderRadius: 5,
+    fontWeight: '600',
   },
-  image: {
-    width: 120,
-    height: 150,
-    alignSelf: 'center',
-    marginBottom: 20,
+  linkText: {
+    textAlign: 'center',
+    color: '#007BFF',
+    marginTop: 10,
+    fontSize: 15,
   },
 });

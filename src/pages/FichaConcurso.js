@@ -1,18 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert, Platform, Image, ActivityIndicator, ScrollView } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { FIRESTORE_DB, FIREBASE_AUTH } from '../config/firebase';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, where, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
 import * as ImagePicker from 'expo-image-picker';
 import uploadImageToImgbb from '../services/imageService';
+import { isAdmin } from '../services/authService';
 
 const FichaConcurso = () => {
     const route = useRoute();
-    const { concursoId } = route.params;
+    const navigation = useNavigation();
+    const { concursoId, timestamp } = route.params;
     const [concurso, setConcurso] = useState(null);
     const [error, setError] = useState('');
     const [isUserSubscribed, setIsUserSubscribed] = useState(false);
     const [isUpdatingSubscription, setIsUpdatingSubscription] = useState(false);
+    const [isAdminUser, setIsAdminUser] = useState(false);
 
     const [userParticipation, setUserParticipation] = useState(null);
     const [isFetchingParticipation, setIsFetchingParticipation] = useState(false);
@@ -41,33 +44,58 @@ const FichaConcurso = () => {
         setIsFetchingParticipation(false);
     }, [currentUser, concursoId]);
 
-    useEffect(() => {
-        const obtenerConcurso = async () => {
-            try {
-                const docRef = doc(FIRESTORE_DB, 'concursos', concursoId);
-                const docSnap = await getDoc(docRef);
+    const cargarDatosConcurso = useCallback(async () => {
+        if (!concursoId) return;
+        console.log(`Cargando datos para concursoId: ${concursoId} (timestamp: ${timestamp}) en FichaConcurso`);
+        setConcurso(null);
+        setError('');
+        try {
+            const docRef = doc(FIRESTORE_DB, 'concursos', concursoId);
+            const docSnap = await getDoc(docRef);
 
-                if (docSnap.exists()) {
-                    const concursoData = docSnap.data();
-                    setConcurso(concursoData);
-                    if (currentUser && concursoData.usersId?.includes(currentUser.uid)) {
-                        setIsUserSubscribed(true);
-                        fetchUserParticipationData();
-                    } else {
-                        setIsUserSubscribed(false);
-                        setUserParticipation(null);
-                    }
+            if (docSnap.exists()) {
+                const concursoData = docSnap.data();
+                setConcurso(concursoData);
+                if (currentUser && concursoData.usersId?.includes(currentUser.uid)) {
+                    setIsUserSubscribed(true);
                 } else {
-                    setError("No se encontró el concurso");
+                    setIsUserSubscribed(false);
+                    setUserParticipation(null);
                 }
-            } catch (e) {
-                console.error("Error al obtener el concurso: ", e);
-                setError("Error al obtener el concurso");
+            } else {
+                setError("No se encontró el concurso");
+            }
+        } catch (e) {
+            console.error("Error al obtener el concurso: ", e);
+            setError("Error al obtener el concurso");
+        }
+    }, [concursoId, currentUser, timestamp]);
+
+    useEffect(() => {
+        if (isUserSubscribed && currentUser && concursoId) {
+            fetchUserParticipationData();
+        }
+    }, [isUserSubscribed, currentUser, concursoId, fetchUserParticipationData]);
+
+    useEffect(() => {
+        const checkAdminStatus = async () => {
+            if (currentUser) {
+                const admin = await isAdmin(currentUser.uid);
+                setIsAdminUser(admin);
             }
         };
+        checkAdminStatus();
+    }, [currentUser]);
 
-        obtenerConcurso();
-    }, [concursoId, currentUser, fetchUserParticipationData]);
+    useFocusEffect(
+        useCallback(() => {
+            console.log('FichaConcurso screen is focused, reloading data.');
+            cargarDatosConcurso();
+            return () => {
+                // console.log('FichaConcurso screen is unfocused');
+            };
+        }, [cargarDatosConcurso])
+    );
 
     const handleToggleSubscription = async () => {
         if (isUpdatingSubscription) return;
@@ -193,11 +221,31 @@ const FichaConcurso = () => {
         }
     };
 
-    if (!concurso) {
+    const handleEditConcurso = () => {
+        navigation.navigate('CrearConcurso', { concursoId: concursoId });
+    };
+
+    const handleVerGaleria = () => {
+        navigation.navigate('Galeria', { concursoId: concursoId });
+    };
+
+    const handleVerRanking = () => {
+        navigation.navigate('RankingConcurso', { concursoId: concursoId });
+    };
+
+    if (!concurso && !error) {
         return (
             <View style={styles.containerLoading}>
-                {error ? <Text style={styles.error}>{error}</Text> : <Text>Cargando concurso...</Text>}
+                <Text>Cargando concurso...</Text>
                 <ActivityIndicator size="large" />
+            </View>
+        );
+    }
+
+    if (error && !concurso) {
+        return (
+            <View style={styles.containerLoading}>
+                <Text style={styles.error}>{error}</Text>
             </View>
         );
     }
@@ -216,6 +264,33 @@ const FichaConcurso = () => {
             <Text>Fecha de fin: {concurso.fechaFin}</Text>
             <Text>Límite de fotos por persona: {concurso.limiteFotosPorPersona}</Text>
             <Text>Estado: {concurso.estado}</Text>
+
+            {isUserSubscribed && (
+            <Pressable 
+                style={[styles.button, styles.buttonGaleria]} 
+                onPress={handleVerGaleria}
+            >
+                <Text style={styles.textButton}>Ver Galería</Text>
+            </Pressable>
+            )}
+
+            {isUserSubscribed && (
+            <Pressable 
+                style={[styles.button, styles.buttonRanking]} 
+                onPress={handleVerRanking}
+            >
+                <Text style={styles.textButton}>Ver Ranking</Text>
+            </Pressable>
+            )}
+
+            {isAdminUser && (
+                <Pressable 
+                    style={[styles.button, styles.buttonEditar]} 
+                    onPress={handleEditConcurso}
+                >
+                    <Text style={styles.textButton}>Editar Concurso</Text>
+                </Pressable>
+            )}
 
             <Pressable 
                 style={[styles.button, isUserSubscribed ? styles.buttonBaja : styles.buttonInscribir]}
@@ -362,7 +437,19 @@ const styles = StyleSheet.create({
     uploadButtonText: {
         color: 'white',
         fontSize: 14,
-    }
+    },
+    buttonEditar: {
+        backgroundColor: 'orange',
+        marginTop: 10,
+    },
+    buttonGaleria: {
+        backgroundColor: '#17a2b8',
+        marginTop: 10,
+    },
+    buttonRanking: {
+        backgroundColor: '#6f42c1',
+        marginTop: 10,
+    },
 });
 
 export default FichaConcurso;

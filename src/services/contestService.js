@@ -1,5 +1,5 @@
 import { FIRESTORE_DB } from '../config/firebase';
-import { collection, addDoc, serverTimestamp, updateDoc, doc, getDocs, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, updateDoc, doc, getDocs, getDoc, deleteDoc, query, where } from 'firebase/firestore';
 
 // Función para crear un concurso
 export const createContest = async (contestData) => {
@@ -69,12 +69,28 @@ export const updateContest = async (contestId, contestData) => {
 // Función para eliminar un concurso
 export const deleteContest = async (contestId) => {
     try {
-        const docRef = doc(FIRESTORE_DB, 'concursos', contestId);
-        await deleteDoc(docRef);
+        // 1. Eliminar participaciones asociadas
+        const participationsRef = collection(FIRESTORE_DB, 'participacionesConcurso');
+        const q = query(participationsRef, where('concursoId', '==', contestId));
+        const querySnapshot = await getDocs(q);
+
+        const deletePromises = [];
+        querySnapshot.forEach((docSnapshot) => {
+            // Aquí se podría añadir la lógica para eliminar imágenes de ImgBB si tuviéramos esa funcionalidad.
+            // Por ahora, solo eliminamos el documento de la participación.
+            deletePromises.push(deleteDoc(doc(FIRESTORE_DB, 'participacionesConcurso', docSnapshot.id)));
+        });
+
+        await Promise.all(deletePromises);
+        console.log(`Participaciones asociadas al concurso ${contestId} eliminadas.`);
+
+        // 2. Eliminar el concurso
+        const contestDocRef = doc(FIRESTORE_DB, 'concursos', contestId);
+        await deleteDoc(contestDocRef);
         console.log('Concurso eliminado con ID: ', contestId);
         return { success: true };
     } catch (error) {
-        console.error('Error al eliminar el concurso: ', error);
+        console.error('Error al eliminar el concurso y sus participaciones: ', error);
         return { success: false, error: error.message };
     }
 };

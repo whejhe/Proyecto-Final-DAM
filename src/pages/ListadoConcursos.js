@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, Alert, Platform } from 'react-native';
 import { FIRESTORE_DB, FIREBASE_AUTH } from '../config/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 import { isAdmin } from '../services/authService';
-import { deleteContest } from '../services/contestService'; // Importa la función deleteContest
+import { deleteContest } from '../services/contestService';
 
 const ListadoConcursos = () => {
     const [concursos, setConcursos] = useState([]);
@@ -41,45 +41,63 @@ const ListadoConcursos = () => {
     };
 
     const handleDeleteConcurso = async (concursoId) => {
-        console.log("Eliminar concurso con ID: ", concursoId);
-        Alert.alert(
-            "Eliminar Concurso",
-            "¿Estás seguro de que quieres eliminar este concurso?",
-            [
-                {
-                    text: "Cancelar",
-                    style: "cancel"
-                },
-                {
-                    text: "Eliminar",
-                    onPress: async () => {
-                        try {
-                            const { success, error } = await deleteContest(concursoId); // Llama a la función deleteContest de contestService
+        const performDelete = async () => {
+            try {
+                console.log(`Intentando eliminar concurso: ${concursoId}`);
+                const { success, error } = await deleteContest(concursoId);
 
-                            if (success) {
-                                // Actualizar la lista de concursos después de eliminar
-                                const concursosRef = collection(FIRESTORE_DB, 'concursos');
-                                const concursosSnap = await getDocs(concursosRef);
-                                const concursosList = concursosSnap.docs.map(doc => ({
-                                    id: doc.id,
-                                    ...doc.data()
-                                }));
-                                setConcursos(concursosList);
-                                Alert.alert("Concurso eliminado correctamente");
-                            } else {
-                                console.error("Error al eliminar el concurso: ", error);
-                                Alert.alert("Error al eliminar el concurso");
-                            }
-                        } catch (error) {
-                            console.error("Error al eliminar el concurso: ", error);
-                            Alert.alert("Error al eliminar el concurso");
-                        }
-                    },
-                    style: "destructive"
+                if (success) {
+                    console.log(`Concurso ${concursoId} eliminado con éxito de Firestore.`);
+                    setConcursos(prevConcursos => prevConcursos.filter(c => c.id !== concursoId));
+                    
+                    const successMessage = "Concurso eliminado correctamente junto con sus participaciones.";
+                    if (Platform.OS === 'web') {
+                        window.alert(successMessage);
+                    } else {
+                        Alert.alert("Éxito", successMessage);
+                    }
+                } else {
+                    console.error(`Error al eliminar el concurso ${concursoId} desde deleteContest: `, error);
+                    const errorMessage = `Error al eliminar el concurso: ${error || 'Error desconocido'}`;
+                    if (Platform.OS === 'web') {
+                        window.alert(errorMessage);
+                    } else {
+                        Alert.alert("Error", errorMessage);
+                    }
                 }
-            ]
-        );
-        console.log("Concurso eliminado con ID: ", concursoId);
+            } catch (e) {
+                console.error(`Excepción al intentar eliminar el concurso ${concursoId}: `, e);
+                const errorMessage = `Excepción al eliminar el concurso: ${e.message || 'Error desconocido'}`;
+                if (Platform.OS === 'web') {
+                    window.alert(errorMessage);
+                } else {
+                    Alert.alert("Error", errorMessage);
+                }
+            }
+        };
+
+        if (Platform.OS === 'web') {
+            if (window.confirm("¿Estás seguro de que quieres eliminar este concurso? Esto eliminará también todas las inscripciones y fotos asociadas.")) {
+                await performDelete();
+            }
+        } else {
+            Alert.alert(
+                "Confirmar Eliminación",
+                "¿Estás seguro de que quieres eliminar este concurso? Esto eliminará también todas las inscripciones y fotos asociadas.",
+                [
+                    {
+                        text: "Cancelar",
+                        style: "cancel"
+                    },
+                    {
+                        text: "Eliminar",
+                        onPress: async () => await performDelete(),
+                        style: "destructive"
+                    }
+                ],
+                { cancelable: true }
+            );
+        }
     };
 
     return (

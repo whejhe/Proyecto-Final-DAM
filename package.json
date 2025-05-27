@@ -15,7 +15,7 @@
     "@babel/core": "^7.25.2",
     "@expo/metro-runtime": "~4.0.1",
     "@react-native-async-storage/async-storage": "1.23.1",
-    "@react-native-community/datetimepicker": "^8.3.0",
+    "@react-native-community/datetimepicker": "8.2.0",
     "@react-navigation/bottom-tabs": "^7.3.13",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.1",
@@ -25,10 +25,11 @@
     "expo-image-picker": "~16.0.6",
     "expo-status-bar": "~2.0.1",
     "firebase": "^11.3.1",
+    "formik": "^2.4.6",
     "react": "18.3.1",
     "react-datepicker": "^8.3.0",
     "react-dom": "18.3.1",
-    "react-native": "0.76.7",
+    "react-native": "0.76.9",
     "react-native-device-info": "^14.0.4",
     "react-native-elements": "^3.4.3",
     "react-native-gesture-handler": "~2.20.2",
@@ -38,7 +39,8 @@
     "react-native-toast-message": "^2.3.0",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
-    "react-navigation": "^4.4.4"
+    "react-navigation": "^4.4.4",
+    "yup": "^1.6.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

@@ -11,7 +11,7 @@ export const registerUser = async (email, password, name, avatar) => {
       uid: user.uid,
       name: name,
       email: email,
-      role: [],
+      role: ['user'],
       createdAt: new Date(),
       avatar: avatar || null,
     });

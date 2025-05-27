@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, ImageBackground } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../config/firebase';
 import { collection, getDocs, updateDoc } from 'firebase/firestore';
@@ -9,7 +9,7 @@ import { parseDate } from '../services/dateService'; // Importa parseDate desde 
 
 const PanelAdmin = () => {
     const navigation = useNavigation();
-    const [estado] = useState('pendiente'); // Solo se necesita estado si se usa en el render, sino se puede eliminar también.
+    // const [estado] = useState('pendiente'); // Comentado ya que no se usa en el render directamente
 
     useEffect(() => {
         // Función para actualizar el estado del concurso
@@ -70,47 +70,76 @@ const PanelAdmin = () => {
     }
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.title}>Panel de Administrador</Text>
+        <ImageBackground 
+            source={require('../../assets/backgrounds/background-admin.png')} 
+            style={styles.backgroundImageContainer}
+            resizeMode="cover" // Para asegurar que cubra bien
+        >
+            <ScrollView contentContainerStyle={styles.container}>
+                <Text style={styles.title}>Panel de Administrador</Text>
 
-            <Pressable style={styles.button} onPress={goToCrearConcurso}>
-                <Text style={styles.textButton}>Crear Concurso</Text>
-            </Pressable>
+                <Pressable style={styles.button} onPress={goToCrearConcurso}>
+                    <Text style={styles.textButton}>Crear Concurso</Text>
+                </Pressable>
 
-            <Pressable style={styles.button} onPress={goToListaUsuarios}>
-                <Text style={styles.textButton}>Lista de Usuarios</Text>
-            </Pressable>
+                <Pressable style={styles.button} onPress={goToListaUsuarios}>
+                    <Text style={styles.textButton}>Lista de Usuarios</Text>
+                </Pressable>
 
-            <Pressable style={styles.button} onPress={goToListadoConcursos}>
-                <Text style={styles.textButton}>Ver Concursos</Text>
-            </Pressable>
-        </ScrollView>
+                <Pressable style={styles.button} onPress={goToListadoConcursos}>
+                    <Text style={styles.textButton}>Ver Concursos</Text>
+                </Pressable>
+            </ScrollView>
+        </ImageBackground>
     );
 };
 
 const styles = StyleSheet.create({
+    backgroundImageContainer: {
+        flex: 1, 
+        width: '100%', // Asegurar ancho completo en web
+        height: '100%', // Asegurar alto completo en web
+    },
     container: {
         flexGrow: 1,
-        justifyContent: 'flex-start',
+        justifyContent: 'center',
         alignItems: 'center',
         padding: 16,
+        backgroundColor: 'rgba(0,0,0,0.3)', // Un overlay oscuro semitransparente para legibilidad
     },
     title: {
-        fontSize: 24,
-        marginBottom: 20,
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#FFF', // Cambiado a blanco para mejor contraste con overlay y fondo
+        marginBottom: 30,
         textAlign: 'center',
+        // Añadir sombra al texto para destacarlo más del fondo
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: {width: -1, height: 1},
+        textShadowRadius: 10
     },
     button: {
-        backgroundColor: 'black',
-        padding: 10,
+        backgroundColor: 'tomato',
+        paddingVertical: 15,
+        paddingHorizontal: 10,
         textAlign: 'center',
-        marginBottom: 12,
-        marginHorizontal: 20,
-        borderRadius: 5,
+        marginBottom: 15,
+        borderRadius: 8,
+        width: '80%',
+        elevation: 3,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.23,
+        shadowRadius: 2.62,
     },
     textButton: {
         color: 'white',
         fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
     },
 });
 

@@ -16,6 +16,8 @@ import { Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import CrearConcurso from "./pages/CrearConcurso";
 import ListaUsuarios from "./pages/listaUsuarios";
+import Galeria from './pages/Galeria';
+import RankingConcurso from './pages/RankingConcurso';
 import { logoutUser, isAdmin } from "./services/authService"; // Importa logoutUser
 import Toast from 'react-native-toast-message';
 
@@ -28,6 +30,8 @@ function HomeStack({ currentUser }) {
       <Stack.Screen name="Home" options={{headerShown:false}} component={Home} />
       <Stack.Screen name="ListadoConcursos" component={ListadoConcursos} />
       <Stack.Screen name="FichaConcurso" component={FichaConcurso} />
+      <Stack.Screen name="Galeria" component={Galeria} />
+      <Stack.Screen name="RankingConcurso" component={RankingConcurso} />
       <Stack.Screen name="CrearConcurso">
         {(props) => <CrearConcurso {...props} currentUser={currentUser} />}
       </Stack.Screen>

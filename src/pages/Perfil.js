@@ -9,7 +9,6 @@ import {
   Platform,
   Alert,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import { FIREBASE_AUTH, FIRESTORE_DB } from "../config/firebase";
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { reauthenticateWithCredential, EmailAuthProvider, deleteUser, signOut } from "firebase/auth";
@@ -17,7 +16,6 @@ import * as ImagePicker from "expo-image-picker";
 import uploadImageToImgbb from "../services/imageService";
 
 const Perfil = ({ onLogout }) => {
-  const navigation = useNavigation();
   const [error, setError] = useState(null);
   const [usuario, setUsuario] = useState(null);
   const [imagenAvatar, setImagenAvatar] = useState(null);
@@ -100,7 +98,7 @@ const Perfil = ({ onLogout }) => {
                 return;
               }
               const result = await ImagePicker.launchCameraAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                mediaTypes: 'Images',
                 allowsEditing: true,
                 aspect: [4, 3],
                 quality: 1,
@@ -129,7 +127,7 @@ const Perfil = ({ onLogout }) => {
             text: "Elegir de la galería",
             onPress: async () => {
               const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                mediaTypes: 'Images',
                 allowsEditing: true,
                 aspect: [4, 3],
                 quality: 1,

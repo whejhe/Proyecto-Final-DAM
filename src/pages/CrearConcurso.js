@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Alert, Platform } from 'react-native';
-import { FIRESTORE_DB, FIREBASE_AUTH } from '../config/firebase';
+import PropTypes from 'prop-types';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import uploadImageToImgbb from '../services/imageService';
@@ -291,6 +291,12 @@ const CrearConcurso = ({ currentUser }) => {
             </Pressable>
         </ScrollView>
     );
+};
+
+CrearConcurso.propTypes = {
+    currentUser: PropTypes.shape({
+        uid: PropTypes.string.isRequired,
+    }),
 };
 
 const styles = StyleSheet.create({

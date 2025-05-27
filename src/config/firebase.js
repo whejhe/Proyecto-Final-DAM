@@ -1,7 +1,8 @@
 import { initializeApp } from "firebase/app";
-import { initializeAuth, getReactNativePersistence, onAuthStateChanged } from "firebase/auth";
+import { initializeAuth, getReactNativePersistence, indexedDBLocalPersistence, onAuthStateChanged } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBeXLiIyUWw5l-pn1P83mHiMJwBmQAR10g',
@@ -15,9 +16,14 @@ const firebaseConfig = {
 // Initialize Firebase
 export const FIREBASE_APP = initializeApp(firebaseConfig);
 
-// Initialize Firebase Auth with AsyncStorage persistence
+// Detectar si la aplicación se está ejecutando en un dispositivo móvil o en un entorno web
+const isMobile = Platform.OS === 'ios' || Platform.OS === 'android';
+
+// Initialize Firebase Auth with persistence
 export const FIREBASE_AUTH = initializeAuth(FIREBASE_APP, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+  persistence: isMobile
+    ? getReactNativePersistence(ReactNativeAsyncStorage)
+    : indexedDBLocalPersistence,
 });
 
 export const FIRESTORE_DB = getFirestore(FIREBASE_APP);

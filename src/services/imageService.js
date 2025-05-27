@@ -1,33 +1,12 @@
-import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
+// Ya no se necesita FileSystem si siempre pasas la base64 pura
+// import * as FileSystem from 'expo-file-system';
 
-const uploadImageToImgbb = async (imageUri) => {
+const uploadImageToImgbb = async (base64Image) => { // Renombrado para claridad
   try {
-    let base64Image = imageUri;
+    // Asumimos que base64Image es la cadena pura de base64
+    // No se necesita la lógica destartsWith('data:image') o Platform.OS para FileSystem
 
-    if (!imageUri.startsWith('data:image')) {
-      // Verifica si la plataforma no es web
-      if (Platform.OS !== 'web') {
-        const fileInfo = await FileSystem.getInfoAsync(imageUri);
-        if (fileInfo.exists) {
-          // Lee el contenido del archivo como base64
-          base64Image = await FileSystem.readAsStringAsync(imageUri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-        } else {
-          console.error('❌ El archivo no existe:', imageUri);
-          return null;
-        }
-      } else {
-        // Si es la web, simplemente usa la URI de la imagen
-        base64Image = imageUri;
-      }
-    } else {
-      // Elimina el encabezado "data:image..."
-      base64Image = base64Image.replace(/^data:image\/\w+;base64,/, '');
-    }
-
-    // Crea el cuerpo de la solicitud con la imagen codificada en base64
     const formData = new FormData();
     formData.append('image', base64Image);
 
@@ -47,11 +26,12 @@ const uploadImageToImgbb = async (imageUri) => {
       console.log('✅ Imagen subida con éxito:', data.data.url);
       return data.data.url;
     } else {
-      console.error('❌ Error al subir la imagen:', data.error);
+      // Proporcionar más detalles del error de ImgBB si están disponibles
+      console.error('❌ Error al subir la imagen a ImgBB:', data.error ? data.error.message || data.error : 'Error desconocido de ImgBB');
       return null;
     }
   } catch (error) {
-    console.error('❌ Error al subir la imagen:', error);
+    console.error('❌ Error en la función uploadImageToImgbb:', error);
     return null;
   }
 };

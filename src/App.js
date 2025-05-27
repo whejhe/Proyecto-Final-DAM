@@ -17,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import CrearConcurso from "./pages/CrearConcurso";
 import ListaUsuarios from "./pages/listaUsuarios";
 import { logoutUser, isAdmin } from "./services/authService"; // Importa logoutUser
+import Toast from 'react-native-toast-message';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -50,7 +51,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    // const auth = getAuth();
     const auth = FIREBASE_AUTH;
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
@@ -115,6 +115,7 @@ export default function App() {
           <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
         </Stack.Navigator>
       )}
+      <Toast />
     </NavigationContainer>
   );
 }

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, TextInput, Text, StyleSheet, Pressable, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { loginUser } from '../services/authService'; // Importa la función loginUser
-import { getDoc, doc } from 'firebase/firestore';
+import Toast from 'react-native-toast-message'; // <--- Añadir importación
 
 
 export default function Login() {
@@ -13,7 +13,7 @@ export default function Login() {
 
 
   const handleLogin = async () => {
-    const { success, user, error: loginError } = await loginUser(email, password);
+    const { success, error: loginError } = await loginUser(email, password);
 
     if (success) {
       console.log('Usuario autenticado:', email);
@@ -22,6 +22,13 @@ export default function Login() {
     } else {
       setError(loginError);
       console.error("Login failed", loginError);
+      Toast.show({
+        type: 'error', // tipo de toast (success, error, info)
+        text1: 'Error de Inicio de Sesión', // Título del toast
+        text2: loginError, // Mensaje del toast (el error devuelto por authService)
+        position: 'bottom', // Posición del toast
+        visibilityTime: 6000, // Duración en ms
+      });
     }
   };
 

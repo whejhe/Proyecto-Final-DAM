@@ -39,7 +39,8 @@ export const loginUser = async (email, password) => {
     const blockedDoc = await getDoc(doc(FIRESTORE_DB, 'blockedUsers', user.uid));
     if (blockedDoc.exists()) {
       await signOut(FIREBASE_AUTH);
-      return { success: false, error: 'Usuario bloqueado. Contacta con el administrador.' };
+      // Mensaje de error más específico
+      return { success: false, error: 'Tu cuenta ha sido bloqueada por un administrador debido al incumplimiento de las normas. Por favor, contacta con soporte para más información.' };
     }
     return { success: true, user };
   } catch (error) {

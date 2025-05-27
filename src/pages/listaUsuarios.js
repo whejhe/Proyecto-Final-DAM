@@ -2,45 +2,46 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Alert } from 'react-native';
 import { ListItem, Avatar, Button } from 'react-native-elements';
 import { FIRESTORE_DB } from '../config/firebase';
-import { collection, getDocs, doc, deleteDoc, getDoc} from 'firebase/firestore';
-import { Platform } from 'react-native';
+import { collection, getDocs, doc, deleteDoc, setDoc, getDoc} from 'firebase/firestore';
 
 const ListaUsuarios = () => {
   const [usuarios, setUsuarios] = useState([]);
 
   const bloquearUsuario = async (userId) => {
-  try {
-    await setDoc(doc(FIRESTORE_DB, 'blockedUsers', userId), { blocked: true });
-    setUsuarios(usuarios.map(u => u.id === userId ? { ...u, blocked: true } : u));
-  } catch (error) {
-    alert('Error al bloquear usuario');
-  }
-};
+    try {
+      await setDoc(doc(FIRESTORE_DB, 'blockedUsers', userId), { blocked: true });
+      setUsuarios(usuarios.map(u => u.id === userId ? { ...u, blocked: true } : u));
+    } catch (error) {
+      console.error("Error al bloquear usuario:", error);
+      Alert.alert('Error', 'Error al bloquear usuario');
+    }
+  };
 
-const desbloquearUsuario = async (userId) => {
-  try {
-    await deleteDoc(doc(FIRESTORE_DB, 'blockedUsers', userId));
-    setUsuarios(usuarios.map(u => u.id === userId ? { ...u, blocked: false } : u));
-  } catch (error) {
-    alert('Error al desbloquear usuario');
-  }
-};
+  const desbloquearUsuario = async (userId) => {
+    try {
+      await deleteDoc(doc(FIRESTORE_DB, 'blockedUsers', userId));
+      setUsuarios(usuarios.map(u => u.id === userId ? { ...u, blocked: false } : u));
+    } catch (error) {
+      console.error("Error al desbloquear usuario:", error);
+      Alert.alert('Error', 'Error al desbloquear usuario');
+    }
+  };
 
   const obtenerUsuarios = async () => {
-  try {
-    const querySnapshot = await getDocs(collection(FIRESTORE_DB, 'users'));
-    const blockedSnapshot = await getDocs(collection(FIRESTORE_DB, 'blockedUsers'));
-    const blockedIds = blockedSnapshot.docs.map(doc => doc.id);
-    const usuariosData = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      blocked: blockedIds.includes(doc.id),
-    }));
-    setUsuarios(usuariosData);
-  } catch (error) {
-    console.error('Error al obtener usuarios:', error);
-  }
-};
+    try {
+      const querySnapshot = await getDocs(collection(FIRESTORE_DB, 'users'));
+      const blockedSnapshot = await getDocs(collection(FIRESTORE_DB, 'blockedUsers'));
+      const blockedIds = blockedSnapshot.docs.map(doc => doc.id);
+      const usuariosData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        blocked: blockedIds.includes(doc.id),
+      }));
+      setUsuarios(usuariosData);
+    } catch (error) {
+      console.error('Error al obtener usuarios:', error);
+    }
+  };
 
   useEffect(() => {
     obtenerUsuarios();
@@ -48,30 +49,30 @@ const desbloquearUsuario = async (userId) => {
 
 
   const renderItem = ({ item }) => (
-  <ListItem bottomDivider>
-    <Avatar
-      rounded
-      source={item.avatar ? { uri: item.avatar } : require('../../assets/avatars/default-User.png')}
-    />
-    <ListItem.Content>
-      <ListItem.Title>{item.name}</ListItem.Title>
-      <ListItem.Subtitle>{item.email}</ListItem.Subtitle>
-    </ListItem.Content>
-    {item.blocked ? (
-      <Button
-        title="Desbloquear"
-        onPress={() => desbloquearUsuario(item.id)}
-        buttonStyle={{ backgroundColor: 'green' }}
+    <ListItem bottomDivider>
+      <Avatar
+        rounded
+        source={item.avatar ? { uri: item.avatar } : require('../../assets/avatars/default-User.png')}
       />
-    ) : (
-      <Button
-        title="Bloquear"
-        onPress={() => bloquearUsuario(item.id)}
-        buttonStyle={{ backgroundColor: 'orange' }}
-      />
-    )}
-  </ListItem>
-);
+      <ListItem.Content>
+        <ListItem.Title>{item.name}</ListItem.Title>
+        <ListItem.Subtitle>{item.email}</ListItem.Subtitle>
+      </ListItem.Content>
+      {item.blocked ? (
+        <Button
+          title="Desbloquear"
+          onPress={() => desbloquearUsuario(item.id)}
+          buttonStyle={{ backgroundColor: 'green' }}
+        />
+      ) : (
+        <Button
+          title="Bloquear"
+          onPress={() => bloquearUsuario(item.id)}
+          buttonStyle={{ backgroundColor: 'orange' }}
+        />
+      )}
+    </ListItem>
+  );
 
   return (
     <View style={styles.container}>

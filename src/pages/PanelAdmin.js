@@ -5,10 +5,11 @@ import { FIREBASE_AUTH, FIRESTORE_DB } from '../config/firebase';
 import { collection, getDocs, updateDoc } from 'firebase/firestore';
 import CrearConcurso from './CrearConcurso'; // Importa el componente CrearConcurso
 import ListaUsuarios from './listaUsuarios';
+import { parseDate } from '../services/dateService'; // Importa parseDate desde dateService
 
 const PanelAdmin = () => {
     const navigation = useNavigation();
-    const [estado, setEstado] = useState('pendiente'); // Estado inicial: pendiente
+    const [estado] = useState('pendiente'); // Solo se necesita estado si se usa en el render, sino se puede eliminar también.
 
     useEffect(() => {
         // Función para actualizar el estado del concurso
@@ -54,7 +55,7 @@ const PanelAdmin = () => {
 
         // Limpia el intervalo al desmontar el componente
         return () => clearInterval(intervalId);
-    }, [estado]);
+    }, []);
 
     const goToCrearConcurso = () => {
         navigation.navigate('HomeTab', { screen: 'CrearConcurso' });
@@ -67,18 +68,6 @@ const PanelAdmin = () => {
     const goToListadoConcursos = () => {
         navigation.navigate('HomeTab', { screen: 'ListadoConcursos' });
     }
-
-    const parseDate = (dateString) => {
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-            return null;
-        }
-        try {
-            return new Date(dateString);
-        } catch (error) {
-            console.warn("Error parsing date string:", dateString);
-            return null;
-        }
-    };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>

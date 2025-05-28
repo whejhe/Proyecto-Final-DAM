@@ -22,15 +22,6 @@ export const registerUser = async (email, password, name, avatar) => {
 };
 
 // Función para iniciar sesión
-// export const loginUser = async (email, password) => {
-//   try {
-//     const userCredential = await signInWithEmailAndPassword(FIREBASE_AUTH, email, password);
-//     const user = userCredential.user;
-//     return { success: true, user };
-//   } catch (error) {
-//     return { success: false, error: error.message };
-//   }
-// };
 export const loginUser = async (email, password) => {
   try {
     const userCredential = await signInWithEmailAndPassword(FIREBASE_AUTH, email, password);

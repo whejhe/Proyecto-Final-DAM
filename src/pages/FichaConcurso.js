@@ -6,6 +6,8 @@ import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, whe
 import * as ImagePicker from 'expo-image-picker';
 import uploadImageToImgbb from '../services/imageService';
 import { isAdmin } from '../services/authService';
+import { getCountdownDetails, calculateTimeRemaining, formatTimeRemaining } from '../services/countdownService';
+import { parseDate } from '../services/dateService';
 
 const FichaConcurso = () => {
     const route = useRoute();
@@ -16,6 +18,8 @@ const FichaConcurso = () => {
     const [isUserSubscribed, setIsUserSubscribed] = useState(false);
     const [isUpdatingSubscription, setIsUpdatingSubscription] = useState(false);
     const [isAdminUser, setIsAdminUser] = useState(false);
+    const [countdownLabel, setCountdownLabel] = useState('Cargando...');
+    const [countdownTimeValue, setCountdownTimeValue] = useState('');
 
     const [userParticipation, setUserParticipation] = useState(null);
     const [isFetchingParticipation, setIsFetchingParticipation] = useState(false);
@@ -96,6 +100,55 @@ const FichaConcurso = () => {
             };
         }, [cargarDatosConcurso])
     );
+
+    useEffect(() => {
+        if (!concurso) {
+            setCountdownLabel('Cargando datos del concurso...');
+            setCountdownTimeValue('');
+            console.log('[Cronómetro] Concurso no cargado aún.');
+            return;
+        }
+        console.log('[Cronómetro] Datos del concurso:', JSON.stringify(concurso, null, 2));
+
+        const details = getCountdownDetails(concurso);
+        console.log('[Cronómetro] Detalles del countdownService:', details);
+        setCountdownLabel(details.label);
+
+        if (!details.isActive || !details.targetDate) {
+            setCountdownTimeValue(details.message || '');
+            console.log('[Cronómetro] No activo o sin fecha objetivo. Label:', details.label, 'Time/Message:', details.message || '');
+            return () => {};
+        }
+
+        const parsedTargetDate = details.targetDate instanceof Date ? details.targetDate : parseDate(details.targetDate);
+        console.log('[Cronómetro] Fecha objetivo parseada para intervalo:', parsedTargetDate);
+
+        if (!parsedTargetDate || isNaN(parsedTargetDate.getTime())) {
+            console.error('[Cronómetro] Fecha objetivo no válida después de parsear para intervalo.');
+            setCountdownLabel('Error de Fecha');
+            setCountdownTimeValue('No se pudo calcular.');
+            return () => {};
+        }
+
+        const intervalId = setInterval(() => {
+            const remaining = calculateTimeRemaining(parsedTargetDate);
+            if (remaining && remaining.totalMilliseconds > 0) {
+                setCountdownTimeValue(formatTimeRemaining(remaining));
+            } else {
+                const currentDetailsAfterExpiry = getCountdownDetails(concurso);
+                setCountdownLabel(currentDetailsAfterExpiry.label);
+                setCountdownTimeValue(currentDetailsAfterExpiry.message || '');
+                console.log('[Cronómetro] Intervalo terminado o tiempo restante 0.');
+                clearInterval(intervalId);
+            }
+        }, 1000);
+
+        return () => {
+            console.log('[Cronómetro] Limpiando intervalo.');
+            clearInterval(intervalId);
+        }
+
+    }, [concurso]);
 
     const handleToggleSubscription = async () => {
         if (isUpdatingSubscription) return;
@@ -250,6 +303,17 @@ const FichaConcurso = () => {
         );
     }
 
+    const now = new Date();
+    const fechaFinConcurso = concurso?.fechaFin ? parseDate(concurso.fechaFin) : null;
+    
+    const canSubscribe = concurso?.estado === 'pendiente' || 
+                         (concurso?.estado === 'activo' && fechaFinConcurso && now < fechaFinConcurso);
+    const canUnsubscribe = isUserSubscribed && concurso?.estado !== 'finalizado';
+    const canUploadPhotos = concurso?.estado === 'activo' && isUserSubscribed;
+    const canViewGallery = isUserSubscribed && (concurso?.estado === 'activo' || concurso?.estado === 'en votacion' || concurso?.estado === 'finalizado');
+    const canViewRanking = concurso?.estado === 'en votacion' || concurso?.estado === 'finalizado';
+    const canEditConcurso = isAdminUser && concurso?.estado !== 'finalizado';
+
     const imageSlots = ['slot1', 'slot2', 'slot3'];
 
     return (
@@ -258,6 +322,12 @@ const FichaConcurso = () => {
             {concurso.imagenConcursoUrl ? (
                 <Image source={{ uri: concurso.imagenConcursoUrl }} style={styles.image} />
             ) : null}
+            {concurso && (
+                <View style={styles.countdownContainer}>
+                    <Text style={styles.countdownLabelStyle}>{countdownLabel}</Text>
+                    {countdownTimeValue ? <Text style={styles.countdownTimeValueStyle}>{countdownTimeValue}</Text> : null}
+                </View>
+            )}
             <Text>Tema: {concurso.tema}</Text>
             <Text>Descripción: {concurso.descripcion}</Text>
             <Text>Fecha de inicio: {concurso.fechaInicio}</Text>
@@ -265,7 +335,7 @@ const FichaConcurso = () => {
             <Text>Límite de fotos por persona: {concurso.limiteFotosPorPersona}</Text>
             <Text>Estado: {concurso.estado}</Text>
 
-            {isUserSubscribed && (
+            {canViewGallery && (
             <Pressable 
                 style={[styles.button, styles.buttonGaleria]} 
                 onPress={handleVerGaleria}
@@ -274,7 +344,7 @@ const FichaConcurso = () => {
             </Pressable>
             )}
 
-            {isUserSubscribed && (
+            {canViewRanking && (
             <Pressable 
                 style={[styles.button, styles.buttonRanking]} 
                 onPress={handleVerRanking}
@@ -285,17 +355,22 @@ const FichaConcurso = () => {
 
             {isAdminUser && (
                 <Pressable 
-                    style={[styles.button, styles.buttonEditar]} 
+                    style={[styles.button, styles.buttonEditar, !canEditConcurso && styles.buttonDisabled]}
                     onPress={handleEditConcurso}
+                    disabled={!canEditConcurso}
                 >
                     <Text style={styles.textButton}>Editar Concurso</Text>
                 </Pressable>
             )}
 
             <Pressable 
-                style={[styles.button, isUserSubscribed ? styles.buttonBaja : styles.buttonInscribir]}
+                style={[
+                    styles.button, 
+                    isUserSubscribed ? styles.buttonBaja : styles.buttonInscribir,
+                    ((isUserSubscribed && !canUnsubscribe) || (!isUserSubscribed && !canSubscribe)) && styles.buttonDisabled
+                ]}
                 onPress={handleToggleSubscription}
-                disabled={isUpdatingSubscription}
+                disabled={isUpdatingSubscription || (isUserSubscribed ? !canUnsubscribe : !canSubscribe)}
             >
                 <Text style={styles.textButton}>
                     {isUpdatingSubscription ? 'Actualizando...' : (isUserSubscribed ? 'Darse de baja' : 'Inscribirse')}
@@ -303,7 +378,7 @@ const FichaConcurso = () => {
             </Pressable>
             {error ? <Text style={styles.error}>{error}</Text> : null}
 
-            {isUserSubscribed && (
+            {canUploadPhotos && (
                 <View style={styles.imageUploadSection}>
                     <Text style={styles.sectionTitle}>Sube tus Fotos (hasta 3)</Text>
                     {isFetchingParticipation ? (
@@ -449,6 +524,26 @@ const styles = StyleSheet.create({
     buttonRanking: {
         backgroundColor: '#6f42c1',
         marginTop: 10,
+    },
+    countdownContainer: {
+        alignItems: 'center',
+        marginVertical: 10,
+    },
+    countdownLabelStyle: { 
+        fontSize: 17, 
+        color: '#333',
+        textAlign: 'center',
+        marginBottom: 4, 
+    },
+    countdownTimeValueStyle: { 
+        fontSize: 22, 
+        fontWeight: 'bold',
+        color: 'tomato', 
+        textAlign: 'center',
+    },
+    buttonDisabled: {
+        backgroundColor: '#cccccc',
+        opacity: 0.7,
     },
 });
 

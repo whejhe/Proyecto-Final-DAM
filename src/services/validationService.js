@@ -42,6 +42,10 @@ export const contestValidationSchema = Yup.object().shape({
         .required('La fecha de fin es obligatoria.')
         .typeError('Debe seleccionar una fecha de fin válida.')
         .min(Yup.ref('fechaInicio'), 'La fecha de fin no puede ser anterior a la fecha de inicio.'),
+    fechaFinVotacion: Yup.date()
+        .required('La fecha de fin de votación es obligatoria.')
+        .typeError('Debe seleccionar una fecha de fin de votación válida.')
+        .min(Yup.ref('fechaFin'), 'La fecha de fin de votación no puede ser anterior a la fecha de fin del concurso.'),
     descripcion: Yup.string()
         .trim()
         .min(10, 'La descripción debe tener al menos 10 caracteres.')
@@ -55,6 +59,3 @@ export const contestValidationSchema = Yup.object().shape({
         .url('Debe ser una URL válida para la imagen del concurso.')
         .required('La imagen del concurso es obligatoria.'),
 });
-
-// Podríamos añadir más esquemas aquí a medida que los necesitemos, por ejemplo:
-// export const contestValidationSchema = Yup.object().shape({ ... });

@@ -22,15 +22,20 @@ const PanelAdmin = () => {
                 const concurso = doc.data();
                 const inicio = parseDate(concurso.fechaInicio);
                 const fin = parseDate(concurso.fechaFin);
+                const finVotacion = concurso.fechaFinVotacion ? parseDate(concurso.fechaFinVotacion) : null; // Parsear fechaFinVotacion
 
-                if (!inicio || !fin) return;
+                if (!inicio || !fin) return; // Si las fechas base no existen, no podemos determinar el estado
 
-                let nuevoEstado = 'pendiente';
+                let nuevoEstado = concurso.estado; // Por defecto, mantener el estado actual
+
                 if (inicio > now) {
                     nuevoEstado = 'pendiente';
                 } else if (inicio <= now && fin >= now) {
                     nuevoEstado = 'activo';
-                } else if (fin < now) {
+                } else if (fin < now && finVotacion && finVotacion >= now) { // Comprobar que finVotacion exista
+                    nuevoEstado = 'en votacion';
+                } else if ((finVotacion && finVotacion < now) || (!finVotacion && fin < now)) { 
+                    // Si finVotacion existe y ya pasó, o si no existe finVotacion y ya pasó fin
                     nuevoEstado = 'finalizado';
                 }
 

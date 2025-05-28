@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, FlatList, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, FlatList, Pressable, Dimensions } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { useRoute } from '@react-navigation/native';
 import { FIRESTORE_DB, FIREBASE_AUTH } from '../config/firebase';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 // Importar Slider si decides usarlo para votar (ej. @react-native-community/slider)
 // import Slider from '@react-native-community/slider';
+
+const MIN_VOTOS_REQUERIDOS = 10; // Definir el mínimo de votos requeridos
 
 const Galeria = () => {
     const route = useRoute();
@@ -17,82 +19,122 @@ const Galeria = () => {
     const [error, setError] = useState('');
     // Estado para seguir los votos del usuario actual en la UI
     const [votosUsuario, setVotosUsuario] = useState({}); // { [imagenId]: votoDado }
+    const [estadoConcurso, setEstadoConcurso] = useState(null); // Nuevo estado para el estado del concurso
+    const [nombresUsuarios, setNombresUsuarios] = useState({}); // Para cachear nombres
+    const [userVotingStats, setUserVotingStats] = useState({ distinctImagesVotedCount: 0, imagesVotedSet: {} }); // Para el feedback al usuario
+
+    const fetchEstadoConcurso = useCallback(async () => {
+        if (!concursoId) return;
+        setLoading(true); // Podrías tener un indicador de carga específico para el estado
+        try {
+            const concursoRef = doc(FIRESTORE_DB, 'concursos', concursoId);
+            const concursoSnap = await getDoc(concursoRef);
+            if (concursoSnap.exists()) {
+                setEstadoConcurso(concursoSnap.data().estado);
+                console.log("[Galeria] Estado del concurso cargado:", concursoSnap.data().estado);
+            } else {
+                console.log("[Galeria] No se encontró el concurso para obtener el estado.");
+                setEstadoConcurso('desconocido');
+                Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cargar la información del concurso.' });
+            }
+        } catch (error) {
+            console.error("[Galeria] Error fetching contest status: ", error);
+            setEstadoConcurso('desconocido');
+            Toast.show({ type: 'error', text1: 'Error', text2: 'Error al cargar estado del concurso.' });
+        }
+        // setLoading(false) // Lo controla el fetchImagenes general
+    }, [concursoId]);
+
+    const fetchUserVotingStats = useCallback(async () => {
+        if (!currentUser || !concursoId) return;
+        try {
+            const statsRef = doc(FIRESTORE_DB, `userContestVotingStats/${currentUser.uid}/contestsVoted/${concursoId}`);
+            const statsSnap = await getDoc(statsRef);
+            if (statsSnap.exists()) {
+                setUserVotingStats(statsSnap.data());
+            } else {
+                setUserVotingStats({ distinctImagesVotedCount: 0, imagesVotedSet: {} });
+            }
+        } catch (error) {
+            console.error("[Galeria] Error fetching user voting stats: ", error);
+            setUserVotingStats({ distinctImagesVotedCount: 0, imagesVotedSet: {} });
+        }
+    }, [currentUser, concursoId]);
 
     const fetchNombreUsuario = useCallback(async (userId) => {
+        if (nombresUsuarios[userId]) return nombresUsuarios[userId]; // Devuelve desde caché si existe
         try {
-            console.log(`fetchNombreUsuario: Intentando obtener nombre para userId: ${userId}`);
-            const userDocRef = doc(FIRESTORE_DB, 'users', userId);
-            const userDocSnap = await getDoc(userDocRef);
-            if (userDocSnap.exists()) {
-                const userData = userDocSnap.data();
-                console.log(`fetchNombreUsuario: Datos para ${userId} (campo esperado 'name'):`, userData);
-                return userData.name || 'Usuario Anónimo (campo \'name\' no encontrado o vacío)';
-            } else {
-                console.log(`fetchNombreUsuario: No se encontró documento para userId: ${userId}`);
-                return 'Usuario Desconocido (documento no encontrado)';
+            const userRef = doc(FIRESTORE_DB, 'users', userId);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+                const nombre = userSnap.data().name || "Usuario Anónimo";
+                setNombresUsuarios(prev => ({ ...prev, [userId]: nombre }));
+                return nombre;
             }
-        } catch (e) {
-            console.error("Error obteniendo nombre de usuario: ", e);
-            return 'Error Usuario (excepción en fetch)';
+            return "Usuario Anónimo";
+        } catch (error) {
+            console.error("Error fetching user name: ", error);
+            return "Usuario Anónimo";
         }
-    }, []);
+    }, [nombresUsuarios]);
 
-    useEffect(() => {
-        const fetchImagenes = async () => {
-            if (!concursoId) {
-                setError('ID de concurso no proporcionado.');
-                setLoading(false);
-                return;
-            }
-            setLoading(true);
-            setError('');
-            try {
-                const participationsRef = collection(FIRESTORE_DB, 'participacionesConcurso');
-                const qParticipation = query(participationsRef, where('concursoId', '==', concursoId));
-                const participationSnapshot = await getDocs(qParticipation);
+    const fetchImagenesYParticipantes = useCallback(async () => {
+        if (!concursoId) return;
+        setLoading(true);
+        setError('');
+        try {
+            const participationsRef = collection(FIRESTORE_DB, 'participacionesConcurso');
+            const qParticipation = query(participationsRef, where('concursoId', '==', concursoId));
+            const participationSnapshot = await getDocs(qParticipation);
 
-                const todasLasImagenes = [];
-                const votosUserActual = {};
+            const todasLasImagenes = [];
+            const votosUserActual = {};
 
-                for (const participationDoc of participationSnapshot.docs) {
-                    const participationData = participationDoc.data();
-                    console.log(`fetchImagenes: Procesando participación del userId: ${participationData.userId}`);
-                    const nombreUsuario = await fetchNombreUsuario(participationData.userId);
-                    console.log(`fetchImagenes: Nombre obtenido para ${participationData.userId}: ${nombreUsuario}`);
-                    
-                    if (participationData.imagenes) {
-                        for (const slotKey of Object.keys(participationData.imagenes)) {
-                            const imagenInfo = participationData.imagenes[slotKey];
-                            if (imagenInfo && imagenInfo.url) {
-                                const imagenId = `${participationDoc.id}-${slotKey}`;
-                                todasLasImagenes.push({
-                                    id: imagenId,
-                                    participationDocId: participationDoc.id, // Necesario para actualizar el voto
-                                    url: imagenInfo.url,
-                                    userIdDueño: participationData.userId, // Dueño de la imagen
-                                    nombreUsuario: nombreUsuario,
-                                    slot: slotKey,
-                                    votosTotales: imagenInfo.votos || {}, // Votos de todos los usuarios para esta imagen
-                                });
-                                // Guardar el voto del usuario actual si existe
-                                if (currentUser && imagenInfo.votos && imagenInfo.votos[currentUser.uid]) {
-                                    votosUserActual[imagenId] = imagenInfo.votos[currentUser.uid];
-                                }
+            for (const participationDoc of participationSnapshot.docs) {
+                const participationData = participationDoc.data();
+                console.log(`fetchImagenes: Procesando participación del userId: ${participationData.userId}`);
+                const nombreUsuario = await fetchNombreUsuario(participationData.userId);
+                console.log(`fetchImagenes: Nombre obtenido para ${participationData.userId}: ${nombreUsuario}`);
+                
+                if (participationData.imagenes) {
+                    for (const slotKey of Object.keys(participationData.imagenes)) {
+                        const imagenInfo = participationData.imagenes[slotKey];
+                        if (imagenInfo && imagenInfo.url) {
+                            const imagenId = `${participationDoc.id}-${slotKey}`;
+                            todasLasImagenes.push({
+                                id: imagenId,
+                                participationDocId: participationDoc.id, // Necesario para actualizar el voto
+                                url: imagenInfo.url,
+                                userIdDueño: participationData.userId, // Dueño de la imagen
+                                nombreUsuario: nombreUsuario,
+                                slot: slotKey,
+                                votosTotales: imagenInfo.votos || {}, // Votos de todos los usuarios para esta imagen
+                            });
+                            // Guardar el voto del usuario actual si existe
+                            if (currentUser && imagenInfo.votos && imagenInfo.votos[currentUser.uid]) {
+                                votosUserActual[imagenId] = imagenInfo.votos[currentUser.uid];
                             }
                         }
                     }
                 }
-                setImagenesParticipantes(todasLasImagenes);
-                setVotosUsuario(votosUserActual);
-            } catch (e) {
-                console.error("Error obteniendo imágenes de la galería: ", e);
-                setError("No se pudieron cargar las imágenes de la galería.");
-            } finally {
-                setLoading(false);
             }
-        };
-        fetchImagenes();
+            setImagenesParticipantes(todasLasImagenes);
+            setVotosUsuario(votosUserActual);
+        } catch (e) {
+            console.error("Error obteniendo imágenes de la galería: ", e);
+            setError("No se pudieron cargar las imágenes de la galería.");
+        } finally {
+            setLoading(false);
+        }
     }, [concursoId, fetchNombreUsuario, currentUser]);
+
+    useEffect(() => {
+        fetchEstadoConcurso();
+        fetchImagenesYParticipantes();
+        if (currentUser) {
+            fetchUserVotingStats();
+        }
+    }, [concursoId, currentUser, fetchEstadoConcurso, fetchImagenesYParticipantes, fetchUserVotingStats]);
 
     const handleVotar = async (imagen) => {
         const { id: imagenId, participationDocId, slot, userIdDueño, votosTotales } = imagen;
@@ -108,6 +150,15 @@ const Galeria = () => {
         }
         if (voto === undefined || voto === null) {
             Toast.show({ type: 'error', text1: 'Error', text2: 'Selecciona una puntuación para votar.' });
+            return;
+        }
+
+        if (estadoConcurso !== 'en votacion') {
+            Toast.show({
+                type: 'info',
+                text1: 'Votación No Activa',
+                text2: 'El período de votación para este concurso no está activo.',
+            });
             return;
         }
 
@@ -127,7 +178,40 @@ const Galeria = () => {
                 : img
             ));
 
-            Toast.show({ type: 'success', text1: 'Voto registrado', text2: `Has votado con ${voto} puntos.` });
+            // Actualizar estadísticas de votación del usuario
+            const userStatsRef = doc(FIRESTORE_DB, `userContestVotingStats/${currentUser.uid}/contestsVoted/${concursoId}`);
+            
+            // Usamos una transacción o un get + set para asegurar consistencia si múltiples votos ocurren rápido,
+            // pero para simplificar, un get y luego set/update es común.
+            const statsSnap = await getDoc(userStatsRef);
+            let currentImagesVotedSet = statsSnap.exists() ? statsSnap.data().imagesVotedSet || {} : {};
+            
+            const imageUniqueIdForStats = `${participationDocId}_${slot}`;
+            let newDistinctCount = userVotingStats.distinctImagesVotedCount; // Tomar del estado para la UI
+
+            if (!currentImagesVotedSet[imageUniqueIdForStats]) { // Si es la primera vez que vota ESTA imagen
+                newDistinctCount = (statsSnap.exists() ? statsSnap.data().distinctImagesVotedCount || 0 : 0) + 1;
+                currentImagesVotedSet[imageUniqueIdForStats] = true; 
+                
+                await setDoc(userStatsRef, {
+                    distinctImagesVotedCount: newDistinctCount,
+                    imagesVotedSet: currentImagesVotedSet,
+                    lastVotedTimestamp: serverTimestamp()
+                }, { merge: true });
+                
+                setUserVotingStats({ distinctImagesVotedCount: newDistinctCount, imagesVotedSet: currentImagesVotedSet });
+
+                if (newDistinctCount < MIN_VOTOS_REQUERIDOS) {
+                    Toast.show({type: 'success', text1: 'Voto Registrado', text2: `Te faltan ${MIN_VOTOS_REQUERIDOS - newDistinctCount} votos distintos para que tus votos cuenten.`});
+                } else {
+                    Toast.show({type: 'success', text1: 'Voto Registrado', text2: '¡Has alcanzado el mínimo de votos distintos requeridos!'});
+                }
+            } else {
+                 // Si ya votó esta imagen, solo se actualizó el voto en la imagen. El conteo de distintos no cambia.
+                 // Podríamos actualizar el `lastVotedTimestamp`
+                await updateDoc(userStatsRef, { lastVotedTimestamp: serverTimestamp() });
+                Toast.show({type: 'success', text1: 'Voto Actualizado', text2: `Tu voto para esta imagen ha sido actualizado.`});
+            }
 
         } catch (e) {
             console.error("Error al registrar el voto: ", e);
@@ -146,6 +230,14 @@ const Galeria = () => {
             // No mostrar Toast aquí si solo se previene la acción, se informará al intentar votar.
             return;
         }
+        if (estadoConcurso !== 'en votacion') {
+            Toast.show({
+                type: 'info',
+                text1: 'Votación No Activa',
+                text2: 'El período de votación para este concurso no está activo.',
+            });
+            return;
+        }
         setVotosUsuario(prev => ({
             ...prev,
             [imagenId]: prev[imagenId] === valorVoto ? null : valorVoto
@@ -155,6 +247,7 @@ const Galeria = () => {
     const renderItemImagen = ({ item }) => {
         const esPropiaFoto = currentUser && item.userIdDueño === currentUser.uid;
         const votoActualUsuarioParaImagen = votosUsuario[item.id];
+        const puedeVotarEnGeneral = estadoConcurso === 'en votacion';
 
         return (
             <View style={styles.imagenContainer}>
@@ -193,6 +286,9 @@ const Galeria = () => {
                             </Pressable>
                         )}
                     </View>
+                )}
+                {!puedeVotarEnGeneral && (
+                    <Text style={styles.infoText}>La votación para este concurso no está activa actualmente.</Text>
                 )}
             </View>
         );
@@ -323,6 +419,13 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    infoText: {
+        textAlign: 'center',
+        color: '#666',
+        fontStyle: 'italic',
+        marginTop: 5,
+        paddingVertical: 10,
     }
 });
 

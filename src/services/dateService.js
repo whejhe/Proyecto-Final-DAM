@@ -7,14 +7,37 @@ export const formatDate = (date) => {
 };
 
 // Función para parsear una fecha
-export const parseDate = (dateString) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-        return null;
+export const parseDate = (dateInput) => {
+    if (!dateInput) return null;
+
+    // Si es un objeto Timestamp de Firestore, conviértelo a Date
+    if (dateInput && typeof dateInput.toDate === 'function') {
+        try {
+            return dateInput.toDate();
+        } catch (error) {
+            console.warn("Error converting Firestore Timestamp to Date:", dateInput, error);
+            return null;
+        }
     }
-    try {
-        return new Date(dateString);
-    } catch (error) {
-        console.warn("Error parsing date string:", dateString);
-        return null;
+
+    // Si es un string, intenta parsearlo directamente
+    // new Date() es bastante flexible con formatos ISO
+    if (typeof dateInput === 'string') {
+        const date = new Date(dateInput);
+        // Verifica si el parseo fue exitoso (no es Invalid Date)
+        if (!isNaN(date.getTime())) {
+            return date;
+        }
     }
+    
+    // Si es un número (milisegundos desde epoch), también es válido
+    if (typeof dateInput === 'number') {
+        const date = new Date(dateInput);
+        if (!isNaN(date.getTime())) {
+            return date;
+        }
+    }
+
+    console.warn("Error parsing date input (unrecognized format or invalid date):", dateInput);
+    return null;
 };

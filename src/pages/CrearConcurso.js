@@ -11,6 +11,17 @@ import { Formik } from 'formik';
 import { contestValidationSchema } from '../services/validationService';
 import Toast from 'react-native-toast-message';
 
+// Función auxiliar para establecer la hora de una fecha a las 10:00:00 AM local
+const setDateTo10AM = (date) => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+        const parsedDate = new Date(date); 
+        date = isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+    }
+    const newDate = new Date(date);
+    newDate.setHours(10, 0, 0, 0); // Hora local del cliente
+    return newDate;
+};
+
 let DateTimePicker;
 if (Platform.OS !== 'web') {
     DateTimePicker = require('@react-native-community/datetimepicker').default;
@@ -25,14 +36,16 @@ const CrearConcurso = ({ currentUser }) => {
     const [isAdminUser, setIsAdminUser] = useState(false);
     const [showDatePickerInicio, setShowDatePickerInicio] = useState(false);
     const [showDatePickerFin, setShowDatePickerFin] = useState(false);
+    const [showDatePickerFinVotacion, setShowDatePickerFinVotacion] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [editingContestId, setEditingContestId] = useState(null);
     
     const [formInitialValues, setFormInitialValues] = useState({
         nombreEvento: '',
         tema: '',
-        fechaInicio: new Date(),
-        fechaFin: new Date(),
+        fechaInicio: setDateTo10AM(new Date()),
+        fechaFin: setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 7))), // Por defecto 1 semana después
+        fechaFinVotacion: setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 14))), // Por defecto 2 semanas después
         descripcion: '',
         limiteFotosPorPersona: 3,
         imagenConcursoUrl: '',
@@ -52,14 +65,17 @@ const CrearConcurso = ({ currentUser }) => {
             const fetchContestData = async () => {
                 const { success, contest, error: fetchError } = await getContest(concursoIdParam);
                 if (success && contest) {
-                    const fInicio = contest.fechaInicio ? new Date(contest.fechaInicio) : new Date();
-                    const fFin = contest.fechaFin ? new Date(contest.fechaFin) : new Date();
+                    // Al cargar, ajustamos las fechas de Firestore a las 10 AM para la UI
+                    const fInicio = contest.fechaInicio ? setDateTo10AM(new Date(contest.fechaInicio)) : setDateTo10AM(new Date());
+                    const fFin = contest.fechaFin ? setDateTo10AM(new Date(contest.fechaFin)) : setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 7)));
+                    const fFinVotacion = contest.fechaFinVotacion ? setDateTo10AM(new Date(contest.fechaFinVotacion)) : setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 14)));
                     
                     setFormInitialValues({
                         nombreEvento: contest.nombreEvento || '',
                         tema: contest.tema || '',
                         fechaInicio: fInicio,
                         fechaFin: fFin,
+                        fechaFinVotacion: fFinVotacion,
                         descripcion: contest.descripcion || '',
                         limiteFotosPorPersona: parseInt(contest.limiteFotosPorPersona, 10) || 3,
                         imagenConcursoUrl: contest.imagenConcursoUrl || '',
@@ -72,11 +88,13 @@ const CrearConcurso = ({ currentUser }) => {
             };
             fetchContestData();
         } else {
+            // Para nuevo concurso, ya se inicializa con setDateTo10AM
             setFormInitialValues({
                 nombreEvento: '',
                 tema: '',
-                fechaInicio: new Date(),
-                fechaFin: new Date(),
+                fechaInicio: setDateTo10AM(new Date()),
+                fechaFin: setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 7))),
+                fechaFinVotacion: setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 14))),
                 descripcion: '',
                 limiteFotosPorPersona: 3,
                 imagenConcursoUrl: '',
@@ -172,12 +190,16 @@ const CrearConcurso = ({ currentUser }) => {
     };
     
     const handleDateChange = (fieldName, selectedDate, setFieldValue) => {
-        const currentDate = selectedDate || formInitialValues[fieldName];
+        // selectedDate ya viene del picker (día, mes, año)
+        // formInitialValues[fieldName] sería la fecha completa actual en el formik state
+        const dateWithCorrectTime = setDateTo10AM(selectedDate || formInitialValues[fieldName]);
+
         if (Platform.OS === 'ios' || Platform.OS === 'android') {
             setShowDatePickerInicio(false);
             setShowDatePickerFin(false);
+            setShowDatePickerFinVotacion(false);
         }
-        setFieldValue(fieldName, currentDate);
+        setFieldValue(fieldName, dateWithCorrectTime);
     };
 
     const handleFormikSubmit = async (values, { setSubmitting, resetForm }) => {
@@ -188,17 +210,22 @@ const CrearConcurso = ({ currentUser }) => {
             setSubmitting(false);
             return;
         }
-
+        // Las fechas en 'values' ya deberían estar con la hora 10 AM debido a setDateTo10AM en onChange/handleDateChange
+        // Solo nos aseguramos que se conviertan a ISO string para Firestore
         const contestData = {
             nombreEvento: values.nombreEvento,
             tema: values.tema,
-            fechaInicio: values.fechaInicio instanceof Date ? values.fechaInicio.toISOString() : new Date(values.fechaInicio).toISOString(),
-            fechaFin: values.fechaFin instanceof Date ? values.fechaFin.toISOString() : new Date(values.fechaFin).toISOString(),
+            fechaInicio: values.fechaInicio.toISOString(),
+            fechaFin: values.fechaFin.toISOString(),
+            fechaFinVotacion: values.fechaFinVotacion.toISOString(),
             descripcion: values.descripcion,
             limiteFotosPorPersona: parseInt(values.limiteFotosPorPersona),
             imagenConcursoUrl: values.imagenConcursoUrl,
-            estado: estado,
+            estado: estado, 
         };
+
+        console.log('[CrearConcurso] Fecha Fin a guardar (local del admin):', values.fechaFin.toString());
+        console.log('[CrearConcurso] Fecha Fin a guardar (ISO UTC):', values.fechaFin.toISOString());
 
         try {
             let success, id, errorMsg;
@@ -214,8 +241,12 @@ const CrearConcurso = ({ currentUser }) => {
                 Toast.show({type: 'success', text1: 'Éxito', text2: `Concurso ${isEditMode ? 'actualizado' : 'creado'} correctamente`});
                 if (!isEditMode) {
                     resetForm();
+                    // Reinicializar con fechas a las 10 AM
                     setFormInitialValues({
-                        nombreEvento: '', tema: '', fechaInicio: new Date(), fechaFin: new Date(),
+                        nombreEvento: '', tema: '', 
+                        fechaInicio: setDateTo10AM(new Date()),
+                        fechaFin: setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 7))),
+                        fechaFinVotacion: setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 14))),
                         descripcion: '', limiteFotosPorPersona: 3, imagenConcursoUrl: '',
                     });
                 }
@@ -237,7 +268,7 @@ const CrearConcurso = ({ currentUser }) => {
             initialValues={formInitialValues}
             validationSchema={contestValidationSchema}
             onSubmit={handleFormikSubmit}
-            enableReinitialize={true}
+            enableReinitialize={true} // Importante para que los valores iniciales se actualicen en modo edición
         >
             {({ handleChange, handleBlur, handleSubmit, values, errors, touched, isSubmitting, setFieldValue }) => (
                 <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
@@ -270,43 +301,54 @@ const CrearConcurso = ({ currentUser }) => {
 
                     {Platform.OS === 'web' && DatePickerWeb ? (
                         <>
-                            <Text style={styles.label}>Fecha de Inicio:</Text>
+                            <Text style={styles.label}>Fecha de Inicio (será a las 10:00 AM):</Text>
                             <DatePickerWeb
-                                selected={values.fechaInicio}
-                                onChange={(date) => setFieldValue('fechaInicio', date)}
-                                dateFormat="yyyy-MM-dd"
+                                selected={values.fechaInicio} // values.fechaInicio ya tiene la hora 10 AM
+                                onChange={(date) => setFieldValue('fechaInicio', setDateTo10AM(date))}
+                                dateFormat="yyyy-MM-dd" // Solo muestra la fecha
                                 disabled={!isAdminUser}
                                 className={styles.datePickerWebInput}
                             />
                             {touched.fechaInicio && errors.fechaInicio && (<Text style={styles.errorText}>{errors.fechaInicio}</Text>)}
 
-                            <Text style={styles.label}>Fecha de Fin:</Text>
+                            <Text style={styles.label}>Fecha de Fin (Cierre Subida Fotos, será a las 10:00 AM):</Text>
                             <DatePickerWeb
                                 selected={values.fechaFin}
-                                onChange={(date) => setFieldValue('fechaFin', date)}
+                                onChange={(date) => setFieldValue('fechaFin', setDateTo10AM(date))}
                                 dateFormat="yyyy-MM-dd"
                                 minDate={values.fechaInicio}
                                 disabled={!isAdminUser}
                                 className={styles.datePickerWebInput}
                             />
                             {touched.fechaFin && errors.fechaFin && (<Text style={styles.errorText}>{errors.fechaFin}</Text>)}
+
+                            <Text style={styles.label}>Fecha de Fin de Votación (será a las 10:00 AM):</Text>
+                            <DatePickerWeb
+                                selected={values.fechaFinVotacion}
+                                onChange={(date) => setFieldValue('fechaFinVotacion', setDateTo10AM(date))}
+                                dateFormat="yyyy-MM-dd"
+                                minDate={values.fechaFin} 
+                                disabled={!isAdminUser}
+                                className={styles.datePickerWebInput}
+                            />
+                            {touched.fechaFinVotacion && errors.fechaFinVotacion && (<Text style={styles.errorText}>{errors.fechaFinVotacion}</Text>)}
                         </>
                     ) : ( Platform.OS !== 'web' && DateTimePicker && 
                         <>
                             <View>
-                                <Text style={styles.label}>Fecha de Inicio:</Text>
+                                <Text style={styles.label}>Fecha de Inicio (será a las 10:00 AM):</Text>
                                 <Pressable onPress={() => isAdminUser && setShowDatePickerInicio(true)} disabled={!isAdminUser}>
                                     <TextInput
                                         style={[styles.input, (touched.fechaInicio && errors.fechaInicio) && styles.inputError]}
-                                        value={formatDate(values.fechaInicio)}
+                                        value={formatDate(values.fechaInicio)} // Muestra solo la fecha formateada
                                         editable={false}
                                         placeholder="Seleccionar fecha de inicio"
                                     />
                                 </Pressable>
                                 {showDatePickerInicio && (
                                     <DateTimePicker
-                                        value={values.fechaInicio}
-                                        mode="date"
+                                        value={values.fechaInicio} // values.fechaInicio ya tiene la hora 10 AM
+                                        mode="date" // Solo permite seleccionar día
                                         display="default"
                                         onChange={(event, date) => handleDateChange('fechaInicio', date, setFieldValue)}
                                     />
@@ -315,7 +357,7 @@ const CrearConcurso = ({ currentUser }) => {
                             </View>
 
                             <View>
-                                <Text style={styles.label}>Fecha de Fin:</Text>
+                                <Text style={styles.label}>Fecha de Fin (Cierre Subida Fotos, será a las 10:00 AM):</Text>
                                 <Pressable onPress={() => isAdminUser && setShowDatePickerFin(true)} disabled={!isAdminUser}>
                                     <TextInput
                                         style={[styles.input, (touched.fechaFin && errors.fechaFin) && styles.inputError]}
@@ -334,6 +376,28 @@ const CrearConcurso = ({ currentUser }) => {
                                     />
                                 )}
                                 {touched.fechaFin && errors.fechaFin && (<Text style={styles.errorText}>{errors.fechaFin}</Text>)}
+                            </View>
+
+                            <View>
+                                <Text style={styles.label}>Fecha de Fin de Votación (será a las 10:00 AM):</Text>
+                                <Pressable onPress={() => isAdminUser && setShowDatePickerFinVotacion(true)} disabled={!isAdminUser}>
+                                    <TextInput
+                                        style={[styles.input, (touched.fechaFinVotacion && errors.fechaFinVotacion) && styles.inputError]}
+                                        value={formatDate(values.fechaFinVotacion)}
+                                        editable={false}
+                                        placeholder="Seleccionar fecha de fin de votación"
+                                    />
+                                </Pressable>
+                                {showDatePickerFinVotacion && (
+                                    <DateTimePicker
+                                        value={values.fechaFinVotacion}
+                                        mode="date"
+                                        display="default"
+                                        minimumDate={values.fechaFin}
+                                        onChange={(event, date) => handleDateChange('fechaFinVotacion', date, setFieldValue)}
+                                    />
+                                )}
+                                {touched.fechaFinVotacion && errors.fechaFinVotacion && (<Text style={styles.errorText}>{errors.fechaFinVotacion}</Text>)}
                             </View>
                         </>
                     )}

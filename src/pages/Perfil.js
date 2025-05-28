@@ -11,13 +11,14 @@ import {
   SafeAreaView,
   StatusBar,
   Modal,
-  ScrollView
+  ScrollView,
+  ImageBackground
 } from "react-native";
 import { FIREBASE_AUTH, FIRESTORE_DB } from "../config/firebase";
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { reauthenticateWithCredential, EmailAuthProvider, deleteUser, signOut } from "firebase/auth";
 import * as ImagePicker from "expo-image-picker";
-import uploadImageToImgbb from "../services/imageService";
+import { uploadImageToImgbb, isValidImageSize } from "../services/imageService";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from 'react-native-toast-message';
 
@@ -27,6 +28,10 @@ const Perfil = ({ onLogout }) => {
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [passwordForDelete, setPasswordForDelete] = useState("");
 
+  // Estados para la edición del nombre
+  const [nombreEditable, setNombreEditable] = useState("");
+  const [nombreOriginal, setNombreOriginal] = useState("");
+
   useEffect(() => {
     const obtenerUsuario = async () => {
       const usuarioActual = FIREBASE_AUTH.currentUser;
@@ -34,7 +39,10 @@ const Perfil = ({ onLogout }) => {
         const docRef = doc(FIRESTORE_DB, "users", usuarioActual.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setUsuario(docSnap.data());
+          const userData = docSnap.data();
+          setUsuario(userData);
+          setNombreEditable(userData.name || "");
+          setNombreOriginal(userData.name || "");
         } else {
           setServerError("No se encontraron datos del usuario.");
         }
@@ -57,14 +65,17 @@ const Perfil = ({ onLogout }) => {
   };
 
   const selectImage = async () => {
-    const processImage = async (base64) => {
-      if (!base64) return;
+    const processImageInternal = async (base64) => {
+      if (!base64) {
+        Toast.show({ type: 'error', text1: 'Error', text2: 'No se proporcionó imagen para procesar.' });
+        return;
+      }
       try {
         Toast.show({ type: 'info', text1: 'Actualizando avatar...'});
-        const url = await uploadImageToImgbb(base64);
-        if (url) {
-          await updateDoc(doc(FIRESTORE_DB, "users", FIREBASE_AUTH.currentUser.uid), { avatar: url });
-          setUsuario(prev => ({ ...prev, avatar: url }));
+        const imageUploadResult = await uploadImageToImgbb(base64);
+        if (imageUploadResult && imageUploadResult.display_url) {
+          await updateDoc(doc(FIRESTORE_DB, "users", FIREBASE_AUTH.currentUser.uid), { avatar: imageUploadResult.display_url });
+          setUsuario(prev => ({ ...prev, avatar: imageUploadResult.display_url }));
           Toast.show({ type: 'success', text1: 'Avatar Actualizado'});
         } else {
           setServerError("Error al subir la imagen (URL no recibida).");
@@ -76,6 +87,28 @@ const Perfil = ({ onLogout }) => {
       }
     };
 
+    const handleMediaSelection = async (pickerResult) => {
+      if (pickerResult.canceled || !pickerResult.assets || pickerResult.assets.length === 0) {
+        console.log("Selección de imagen cancelada o sin assets.");
+        return;
+      }
+  
+      const asset = pickerResult.assets[0];
+      const validation = isValidImageSize(asset.fileSize);
+
+      if (!validation.isValid) {
+        Alert.alert("Archivo Demasiado Grande", validation.message);
+        return;
+      }
+  
+      if (asset.base64) {
+        await processImageInternal(asset.base64);
+      } else {
+        console.warn("Asset no contiene base64 directamente (inesperado para móvil).");
+        Toast.show({ type: 'error', text1: 'Error de Imagen', text2: 'No se pudo obtener la imagen en base64.' });
+      }
+    };
+
     if (Platform.OS === "web") {
       const input = document.createElement("input");
       input.type = "file";
@@ -83,6 +116,12 @@ const Perfil = ({ onLogout }) => {
       input.onchange = async (event) => {
         const file = event.target.files[0];
         if (file) {
+          const validation = isValidImageSize(file.size);
+          if (!validation.isValid) {
+            Alert.alert("Archivo Demasiado Grande", validation.message);
+            return;
+          }
+
           const reader = new FileReader();
           reader.onload = async () => {
             const base64Marker = ';base64,';
@@ -91,32 +130,73 @@ const Perfil = ({ onLogout }) => {
             if (base64Idx !== -1) {
                 pureBase64String = pureBase64String.substring(base64Idx + base64Marker.length);
             }
-            await processImage(pureBase64String);
+            await processImageInternal(pureBase64String);
           };
           reader.readAsDataURL(file);
         }
       };
       input.click();
     } else {
+      // Para móvil
+      const options = {
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1,1],
+        quality: 0.8,
+        base64: true, 
+      };
       Alert.alert("Cambiar Avatar", "Elige una opción:", [
         {
           text: "Tomar Foto", onPress: async () => {
             const perm = await ImagePicker.requestCameraPermissionsAsync();
             if (!perm.granted) { Alert.alert("Permiso Denegado", "Necesitas dar permiso a la cámara."); return; }
-            let result = await ImagePicker.launchCameraAsync({ base64: true, allowsEditing: true, aspect: [1,1], quality: 0.8 });
-            if (!result.canceled) await processImage(result.assets[0].base64);
+            let result = await ImagePicker.launchCameraAsync(options);
+            await handleMediaSelection(result);
           }
         },
         {
           text: "Elegir de Galería", onPress: async () => {
             const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (!perm.granted) { Alert.alert("Permiso Denegado", "Necesitas dar permiso a la galería."); return; }
-            let result = await ImagePicker.launchImageLibraryAsync({ base64: true, allowsEditing: true, aspect: [1,1], quality: 0.8 });
-            if (!result.canceled) await processImage(result.assets[0].base64);
+            let result = await ImagePicker.launchImageLibraryAsync(options);
+            await handleMediaSelection(result);
           }
         },
         { text: "Cancelar", style: "cancel" }
       ]);
+    }
+  };
+
+  const handleGuardarNombre = async () => {
+    if (!nombreEditable.trim()) {
+      Toast.show({ type: 'error', text1: 'Error', text2: 'El nombre no puede estar vacío.' });
+      setNombreEditable(nombreOriginal); // Revertir al original si está vacío
+      return;
+    }
+    if (nombreEditable.trim() === nombreOriginal) {
+      Toast.show({ type: 'info', text1: 'Información', text2: 'No hay cambios en el nombre.' });
+      return;
+    }
+
+    try {
+      Toast.show({ type: 'info', text1: 'Actualizando nombre...' });
+      const userUid = FIREBASE_AUTH.currentUser?.uid;
+      if (!userUid) {
+        Toast.show({ type: 'error', text1: 'Error', text2: 'Usuario no autenticado.' });
+        return;
+      }
+      const userDocRef = doc(FIRESTORE_DB, "users", userUid);
+      await updateDoc(userDocRef, { name: nombreEditable.trim() });
+      
+      setUsuario(prev => ({ ...prev, name: nombreEditable.trim() }));
+      setNombreOriginal(nombreEditable.trim());
+      Toast.show({ type: 'success', text1: 'Nombre Actualizado', text2: 'Tu nombre ha sido actualizado.'});
+    } catch (error) {
+      console.error("Error al actualizar el nombre:", error);
+      setServerError("Error al actualizar el nombre.");
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo actualizar el nombre.' });
+      // Revertir el nombre editable al original en caso de error
+      setNombreEditable(nombreOriginal);
     }
   };
 
@@ -162,42 +242,63 @@ const Perfil = ({ onLogout }) => {
     );
   }
 
+  const hayCambiosEnNombre = nombreEditable.trim() !== nombreOriginal && nombreEditable.trim() !== "";
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={styles.safeArea.backgroundColor} />
-      <ScrollView contentContainerStyle={styles.container}>
-        <Pressable onPress={selectImage} style={styles.avatarContainer}>
-          <Image 
-            source={usuario.avatar ? { uri: usuario.avatar } : require("../../assets/avatars/default-User.png")} 
-            style={styles.avatar} 
+      <ImageBackground
+        source={require('../../assets/backgrounds/background1.png')}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <Pressable onPress={selectImage} style={styles.avatarContainer}>
+            <Image 
+              source={usuario.avatar ? { uri: usuario.avatar } : require("../../assets/avatars/default-User.png")} 
+              style={styles.avatar} 
+            />
+            <View style={styles.editAvatarIconContainer}>
+              <Ionicons name="camera-reverse-outline" size={24} color="#fff" />
+            </View>
+          </Pressable>
+          
+          <TextInput
+            style={styles.nombreInput}
+            value={nombreEditable}
+            onChangeText={setNombreEditable}
+            placeholder="Nombre"
+            placeholderTextColor="#aaa"
           />
-          <View style={styles.editAvatarIconContainer}>
-            <Ionicons name="camera-reverse-outline" size={24} color="#fff" />
-          </View>
-        </Pressable>
-        
-        <Text style={styles.nombre}>{usuario?.name || "Nombre no disponible"}</Text>
-        <Text style={styles.correo}>{usuario?.email || "Email no disponible"}</Text>
-        <Text style={styles.role}>Rol: {usuario?.role ? usuario.role : 'No especificado'}</Text>
-        
-        {usuario?.createdAt && (
-          <Text style={styles.createdAt}>
-            Miembro desde: {new Date(usuario.createdAt.seconds * 1000).toLocaleDateString()}
-          </Text>
-        )}
+          {hayCambiosEnNombre && (
+            <Pressable style={[styles.button, styles.saveNameButton]} onPress={handleGuardarNombre}>
+              <Ionicons name="save-outline" size={22} color="#FFF" style={{marginRight: 10}} />
+              <Text style={styles.buttonText}>Guardar Nombre</Text>
+            </Pressable>
+          )}
 
-        {serverError && <Text style={[styles.errorText, {textAlign: 'center', marginBottom: 15}]}>{serverError}</Text>}
+          <Text style={styles.correo}>{usuario?.email || "Email no disponible"}</Text>
+          <Text style={styles.role}>Rol: {Array.isArray(usuario?.role) ? usuario.role.join(', ') : usuario?.role || 'No especificado'}</Text>
+          
+          {usuario?.createdAt && (
+            <Text style={styles.createdAt}>
+              Miembro desde: {new Date(usuario.createdAt.seconds * 1000).toLocaleDateString()}
+            </Text>
+          )}
 
-        <Pressable style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={22} color="#FFF" style={{marginRight: 10}} />
-          <Text style={styles.buttonText}>Cerrar Sesión</Text>
-        </Pressable>
-        
-        <Pressable style={[styles.button, styles.deleteButton]} onPress={handleDeleteAccount}>
-          <Ionicons name="trash-outline" size={22} color="#FFF" style={{marginRight: 10}} />
-          <Text style={styles.buttonText}>Eliminar Cuenta</Text>
-        </Pressable>
-      </ScrollView>
+          {serverError && <Text style={[styles.errorText, {textAlign: 'center', marginBottom: 15}]}>{serverError}</Text>}
+
+          <Pressable style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={22} color="#FFF" style={{marginRight: 10}} />
+            <Text style={styles.buttonText}>Cerrar Sesión</Text>
+          </Pressable>
+          
+          <Pressable style={[styles.button, styles.deleteButton]} onPress={handleDeleteAccount}>
+            <Ionicons name="trash-outline" size={22} color="#FFF" style={{marginRight: 10}} />
+            <Text style={styles.buttonText}>Eliminar Cuenta</Text>
+          </Pressable>
+        </ScrollView>
+      </ImageBackground>
 
       <Modal
         animationType="slide"
@@ -240,7 +341,11 @@ const Perfil = ({ onLogout }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+  },
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
   },
   safeAreaLoading: {
     flex: 1,
@@ -278,15 +383,22 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 5,
     right: 5,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(69, 124, 160, 0.6)',
     padding: 8,
     borderRadius: 20, 
   },
-  nombre: {
+  nombreInput: {
     fontSize: 26,
     fontWeight: "bold",
     color: "#333",
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#888",
+    paddingBottom: 5,
+    textAlign: 'center',
+    width: '80%',
+    borderRadius: 5,
+    paddingHorizontal: 10,
   },
   correo: {
     fontSize: 17,
@@ -321,6 +433,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
     shadowRadius: 2,
+  },
+  saveNameButton: {
+    backgroundColor: '#28a745',
+    marginTop: 5,
+    width: '80%',
   },
   logoutButton: {
     backgroundColor: '#6C757D',

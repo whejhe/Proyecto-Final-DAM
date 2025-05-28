@@ -50,11 +50,6 @@ export const contestValidationSchema = Yup.object().shape({
         .trim()
         .min(10, 'La descripción debe tener al menos 10 caracteres.')
         .required('La descripción es obligatoria.'),
-    limiteFotosPorPersona: Yup.number()
-        .typeError('El límite de fotos debe ser un número.')
-        .integer('El límite de fotos debe ser un número entero.')
-        .min(1, 'El límite de fotos por persona debe ser al menos 1.')
-        .required('El límite de fotos es obligatorio.'),
     imagenConcursoUrl: Yup.string()
         .url('Debe ser una URL válida para la imagen del concurso.')
         .required('La imagen del concurso es obligatoria.'),

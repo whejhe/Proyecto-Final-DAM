@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, Pressable } from 'react-native';
+import { View, TextInput, Text, StyleSheet, Pressable, ImageBackground } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { FIREBASE_AUTH } from '../config/firebase';
 import { sendPasswordResetEmail } from 'firebase/auth';
@@ -27,28 +27,39 @@ const ForgotPassword = () => {
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Recuperar Contraseña</Text>
-            {message ? <Text style={styles.message}>{message}</Text> : null}
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-            <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-            />
-            <Pressable onPress={handlePasswordReset}>
-                <Text style={styles.Button}>Enviar</Text>
-            </Pressable>
-            <Pressable onPress={() => navigation.navigate('Login')}>
-                <Text style={{ textAlign: 'center', color: 'blue', paddingTop: 20 }}>Volver al Login</Text>
-            </Pressable>
-        </View>
+        <ImageBackground
+            source={require('../../assets/backgrounds/background1.png')}
+            style={styles.backgroundImage}
+            resizeMode="cover"
+        >
+            <View style={styles.container}>
+                <Text style={styles.title}>Recuperar Contraseña</Text>
+                {message ? <Text style={styles.message}>{message}</Text> : null}
+                {error ? <Text style={styles.error}>{error}</Text> : null}
+                <TextInput
+                    style={styles.input}
+                    placeholder="Email"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                />
+                <Pressable onPress={handlePasswordReset}>
+                    <Text style={styles.Button}>Enviar</Text>
+                </Pressable>
+                <Pressable onPress={() => navigation.navigate('Login')}>
+                    <Text style={{ textAlign: 'center', color: 'blue', paddingTop: 20 }}>Volver al Login</Text>
+                </Pressable>
+            </View>
+        </ImageBackground>
     );
 };
 
 const styles = StyleSheet.create({
+    backgroundImage: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
     container: {
         flex: 1,
         justifyContent: 'center',

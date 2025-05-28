@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, Pressable, SafeAreaView, StatusBar } from "react-native";
+import { View, Text, StyleSheet, Pressable, SafeAreaView, StatusBar, ImageBackground } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -9,21 +9,27 @@ const Home = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={styles.safeArea.backgroundColor} />
-      <View style={styles.container}>
-        <Ionicons name="camera-outline" size={80} color="#007BFF" style={styles.icon} />
-        <Text style={styles.title}>¡Bienvenido a TuMejorToma!</Text>
-        <Text style={styles.description}>
-          Tu espacio para participar, votar y celebrar la mejor fotografía.
-          Explora concursos activos, sube tus mejores capturas y ¡deja que el mundo las admire!
-        </Text>
-        <Pressable
-          style={styles.button}
-          onPress={() => navigation.navigate("ListadoConcursos")}
-        >
-          <Text style={styles.buttonText}>Explorar Concursos</Text>
-          <Ionicons name="arrow-forward-circle-outline" size={24} color="white" style={{ marginLeft: 8 }}/>
-        </Pressable>
-      </View>
+      <ImageBackground
+        source={require('../../assets/backgrounds/background1.png')}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <View style={styles.container}>
+          <Ionicons name="camera-outline" size={80} color="#007BFF" style={styles.icon} />
+          <Text style={styles.title}>¡Bienvenido a TuMejorToma!</Text>
+          <Text style={styles.description}>
+            Tu espacio para participar, votar y celebrar la mejor fotografía.
+            Explora concursos activos, sube tus mejores capturas y ¡deja que el mundo las admire!
+          </Text>
+          <Pressable
+            style={styles.button}
+            onPress={() => navigation.navigate("ListadoConcursos")}
+          >
+            <Text style={styles.buttonText}>Explorar Concursos</Text>
+            <Ionicons name="arrow-forward-circle-outline" size={24} color="white" style={{ marginLeft: 8 }}/>
+          </Pressable>
+        </View>
+      </ImageBackground>
     </SafeAreaView>
   );
 };
@@ -31,7 +37,11 @@ const Home = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+  },
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
   },
   container: {
     flex: 1,

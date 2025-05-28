@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, Pressable, Image, Platform, Alert } from 'react-native';
+import { View, TextInput, Text, StyleSheet, Pressable, Image, Platform, Alert, ImageBackground } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { registerUser } from '../services/authService';
 import * as ImagePicker from 'expo-image-picker';
-import uploadImageToImgbb from '../services/imageService';
+import { uploadImageToImgbb } from '../services/imageService';
 import { Formik } from 'formik';
 import { registerValidationSchema } from '../services/validationService';
 import Toast from 'react-native-toast-message';
@@ -32,9 +32,9 @@ export default function Register() {
             }
             try {
               Toast.show({ type: 'info', text1: 'Subiendo avatar...' });
-              const url = await uploadImageToImgbb(base64);
-              if (url) {
-                setFieldValue('avatar', url);
+              const imageUploadResult = await uploadImageToImgbb(base64);
+              if (imageUploadResult && imageUploadResult.display_url) {
+                setFieldValue('avatar', imageUploadResult.display_url);
                 setServerError('');
                 Toast.show({ type: 'success', text1: 'Avatar subido' });
               } else {
@@ -69,9 +69,9 @@ export default function Register() {
       });
       if (!result.canceled && result.assets && result.assets[0].base64) {
         Toast.show({ type: 'info', text1: 'Subiendo avatar...' });
-        const url = await uploadImageToImgbb(result.assets[0].base64);
-        if (url) {
-          setFieldValue('avatar', url);
+        const imageUploadResult = await uploadImageToImgbb(result.assets[0].base64);
+        if (imageUploadResult && imageUploadResult.display_url) {
+          setFieldValue('avatar', imageUploadResult.display_url);
           setServerError('');
           Toast.show({ type: 'success', text1: 'Avatar subido' });
         } else {
@@ -123,76 +123,86 @@ export default function Register() {
       onSubmit={handleRegisterSubmit}
     >
       {({ handleChange, handleBlur, handleSubmit, values, errors, touched, isSubmitting, setFieldValue }) => (
-        <View style={styles.container}>
-          <Pressable onPress={() => handleSelectImage(setFieldValue)} disabled={isSubmitting}>
-            <Image
-              source={values.avatar ? { uri: values.avatar } : require('../../assets/avatars/default-User.png')}
-              style={styles.image}
+        <ImageBackground
+          source={require('../../assets/backgrounds/background1.png')}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        >
+          <View style={styles.container}>
+            <Pressable onPress={() => handleSelectImage(setFieldValue)} disabled={isSubmitting}>
+              <Image
+                source={values.avatar ? { uri: values.avatar } : require('../../assets/avatars/default-User.png')}
+                style={styles.image}
+              />
+            </Pressable>
+            {touched.avatar && errors.avatar && (<Text style={styles.errorTextCentered}>{errors.avatar}</Text>)}
+
+            <Text style={styles.title}>Crear Cuenta</Text>
+            {serverError ? <Text style={styles.error}>{serverError}</Text> : null}
+
+            <TextInput
+              style={[styles.input, (touched.nombreCompleto && errors.nombreCompleto) && styles.inputError]}
+              placeholder="Nombre Completo"
+              value={values.nombreCompleto}
+              onChangeText={handleChange('nombreCompleto')}
+              onBlur={handleBlur('nombreCompleto')}
             />
-          </Pressable>
-          {touched.avatar && errors.avatar && (<Text style={styles.errorTextCentered}>{errors.avatar}</Text>)}
+            {touched.nombreCompleto && errors.nombreCompleto && (<Text style={styles.errorText}>{errors.nombreCompleto}</Text>)}
 
-          <Text style={styles.title}>Crear Cuenta</Text>
-          {serverError ? <Text style={styles.error}>{serverError}</Text> : null}
+            <TextInput
+              style={[styles.input, (touched.email && errors.email) && styles.inputError]}
+              placeholder="Email"
+              value={values.email}
+              onChangeText={handleChange('email')}
+              onBlur={handleBlur('email')}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            {touched.email && errors.email && (<Text style={styles.errorText}>{errors.email}</Text>)}
 
-          <TextInput
-            style={[styles.input, (touched.nombreCompleto && errors.nombreCompleto) && styles.inputError]}
-            placeholder="Nombre Completo"
-            value={values.nombreCompleto}
-            onChangeText={handleChange('nombreCompleto')}
-            onBlur={handleBlur('nombreCompleto')}
-          />
-          {touched.nombreCompleto && errors.nombreCompleto && (<Text style={styles.errorText}>{errors.nombreCompleto}</Text>)}
+            <TextInput
+              style={[styles.input, (touched.password && errors.password) && styles.inputError]}
+              placeholder="Contraseña"
+              value={values.password}
+              onChangeText={handleChange('password')}
+              onBlur={handleBlur('password')}
+              secureTextEntry
+            />
+            {touched.password && errors.password && (<Text style={styles.errorText}>{errors.password}</Text>)}
 
-          <TextInput
-            style={[styles.input, (touched.email && errors.email) && styles.inputError]}
-            placeholder="Email"
-            value={values.email}
-            onChangeText={handleChange('email')}
-            onBlur={handleBlur('email')}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          {touched.email && errors.email && (<Text style={styles.errorText}>{errors.email}</Text>)}
+            <TextInput
+              style={[styles.input, (touched.confirmPassword && errors.confirmPassword) && styles.inputError]}
+              placeholder="Confirmar Contraseña"
+              value={values.confirmPassword}
+              onChangeText={handleChange('confirmPassword')}
+              onBlur={handleBlur('confirmPassword')}
+              secureTextEntry
+            />
+            {touched.confirmPassword && errors.confirmPassword && (<Text style={styles.errorText}>{errors.confirmPassword}</Text>)}
 
-          <TextInput
-            style={[styles.input, (touched.password && errors.password) && styles.inputError]}
-            placeholder="Contraseña"
-            value={values.password}
-            onChangeText={handleChange('password')}
-            onBlur={handleBlur('password')}
-            secureTextEntry
-          />
-          {touched.password && errors.password && (<Text style={styles.errorText}>{errors.password}</Text>)}
-
-          <TextInput
-            style={[styles.input, (touched.confirmPassword && errors.confirmPassword) && styles.inputError]}
-            placeholder="Confirmar Contraseña"
-            value={values.confirmPassword}
-            onChangeText={handleChange('confirmPassword')}
-            onBlur={handleBlur('confirmPassword')}
-            secureTextEntry
-          />
-          {touched.confirmPassword && errors.confirmPassword && (<Text style={styles.errorText}>{errors.confirmPassword}</Text>)}
-
-          <Pressable onPress={handleSubmit} style={styles.buttonContainer} disabled={isSubmitting}>
-            <Text style={styles.buttonText}>{isSubmitting ? 'Registrando...' : 'Registrarse'}</Text>
-          </Pressable>
-          <Pressable onPress={() => navigation.navigate('Login')} disabled={isSubmitting}>
-            <Text style={styles.linkText}>¿Ya tienes cuenta? Inicia Sesión</Text>
-          </Pressable>
-        </View>
+            <Pressable onPress={handleSubmit} style={styles.buttonContainer} disabled={isSubmitting}>
+              <Text style={styles.buttonText}>{isSubmitting ? 'Registrando...' : 'Registrarse'}</Text>
+            </Pressable>
+            <Pressable onPress={() => navigation.navigate('Login')} disabled={isSubmitting}>
+              <Text style={styles.linkText}>¿Ya tienes cuenta? Inicia Sesión</Text>
+            </Pressable>
+          </View>
+        </ImageBackground>
       )}
     </Formik>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 30,
-    backgroundColor: '#F5F5F5',
   },
   image: {
     width: 120,

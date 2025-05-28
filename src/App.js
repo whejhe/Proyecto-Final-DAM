@@ -26,7 +26,17 @@ const Tab = createBottomTabNavigator();
 
 function HomeStack({ currentUser }) {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{ // Opciones por defecto para HomeStack
+        headerStyle: {
+          backgroundColor: '#2C2C2C', // Gris oscuro
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
       <Stack.Screen name="Home" options={{headerShown:false}} component={Home} />
       <Stack.Screen name="ListadoConcursos" component={ListadoConcursos} />
       <Stack.Screen name="FichaConcurso" component={FichaConcurso} />
@@ -74,6 +84,14 @@ export default function App() {
       {currentUser ? (
         <Tab.Navigator
           screenOptions={({ route }) => ({
+            // Opciones de cabecera para las pantallas del TabNavigator
+            headerStyle: {
+              backgroundColor: '#2C2C2C', // Gris oscuro
+            },
+            headerTintColor: '#fff', // Texto blanco
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
             tabBarIcon: ({ focused, color, size }) => {
               let iconName;
 
@@ -81,13 +99,20 @@ export default function App() {
                 iconName = focused ? "home" : "home-outline";
               } else if (route.name === "Perfil") {
                 iconName = focused ? "person" : "person-outline";
+              } else if (route.name === "PanelAdmin") { // Icono para PanelAdmin
+                iconName = focused ? "cog" : "cog-outline";
               }
 
-              // Puedes retornar cualquier componente que quieras aquí!
               return <Ionicons name={iconName} size={size} color={color} />;
             },
-            tabBarActiveTintColor: "tomato",
-            tabBarInactiveTintColor: "gray",
+            tabBarActiveTintColor: "#FFFFFF", // Color activo del icono/texto: Blanco
+            tabBarInactiveTintColor: "#B0B0B0", // Color inactivo del icono/texto: Gris claro
+            tabBarStyle: [
+              {
+                backgroundColor: '#2C2C2C', // Gris oscuro para la barra de pestañas
+              },
+              null
+            ]
           })}
         >
           <Tab.Screen name="HomeTab" options={{ headerShown: false }}>
@@ -102,7 +127,7 @@ export default function App() {
           <Tab.Screen name="Perfil">
             {(props) =>
               currentUser ? (
-                <Perfil {...props} user={currentUser} onLogout={handleLogout} /> // Pasa handleLogout como prop
+                <Perfil {...props} user={currentUser} onLogout={handleLogout} />
               ) : (
                 <Text>Cargando...</Text>
               )
@@ -113,7 +138,18 @@ export default function App() {
           )}
         </Tab.Navigator>
       ) : (
-        <Stack.Navigator initialRouteName="Login">
+        <Stack.Navigator 
+          initialRouteName="Login"
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: '#2C2C2C', // Gris oscuro
+            },
+            headerTintColor: '#fff', // Texto blanco
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+          }}
+        >
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Register" component={Register} />
           <Stack.Screen name="ForgotPassword" component={ForgotPassword} />

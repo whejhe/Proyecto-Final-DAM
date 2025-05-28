@@ -49,20 +49,42 @@ export const logoutUser = async () => {
   }
 };
 
-// Función para verificar si el usuario es administrador
+// Función para verificar si el usuario es administrador o super administrador
 export const isAdmin = async (userId) => {
   try {
+    if (!userId) return false; // Añadida verificación por si userId es null o undefined
     const userRef = doc(FIRESTORE_DB, 'users', userId);
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists()) {
       const userData = userSnap.data();
-      return userData?.role?.includes('admin');
+      // Verifica si el array de roles incluye 'admin' o 'superAdmin'
+      return userData?.role?.includes('admin') || userData?.role?.includes('superAdmin');
     } else {
       return false;
     }
   } catch (error) {
-    console.error("Error fetching user data:", error);
+    console.error("Error fetching user data for admin check:", error);
+    return false;
+  }
+};
+
+// Función para verificar si el usuario es super administrador
+export const isSuperAdmin = async (userId) => {
+  try {
+    if (!userId) return false;
+    const userRef = doc(FIRESTORE_DB, 'users', userId);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      // Verifica si el array de roles incluye 'superAdmin'
+      return userData?.role?.includes('superAdmin');
+    } else {
+      return false;
+    }
+  } catch (error) {
+    console.error("Error fetching user data for superAdmin check:", error);
     return false;
   }
 };

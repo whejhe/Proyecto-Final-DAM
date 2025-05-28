@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Platform, Ima
 import PropTypes from 'prop-types';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import uploadImageToImgbb from '../services/imageService';
+import { uploadImageToImgbb } from '../services/imageService';
 import { isAdmin } from '../services/authService';
 import { createContest, getContest, updateContest } from '../services/contestService';
 import { formatDate } from '../services/dateService';
@@ -44,10 +44,9 @@ const CrearConcurso = ({ currentUser }) => {
         nombreEvento: '',
         tema: '',
         fechaInicio: setDateTo10AM(new Date()),
-        fechaFin: setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 7))), // Por defecto 1 semana después
-        fechaFinVotacion: setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 14))), // Por defecto 2 semanas después
+        fechaFin: setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 7))),
+        fechaFinVotacion: setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 14))),
         descripcion: '',
-        limiteFotosPorPersona: 3,
         imagenConcursoUrl: '',
     });
 
@@ -77,7 +76,6 @@ const CrearConcurso = ({ currentUser }) => {
                         fechaFin: fFin,
                         fechaFinVotacion: fFinVotacion,
                         descripcion: contest.descripcion || '',
-                        limiteFotosPorPersona: parseInt(contest.limiteFotosPorPersona, 10) || 3,
                         imagenConcursoUrl: contest.imagenConcursoUrl || '',
                     });
                     setEstado(contest.estado || 'pendiente');
@@ -96,7 +94,6 @@ const CrearConcurso = ({ currentUser }) => {
                 fechaFin: setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 7))),
                 fechaFinVotacion: setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 14))),
                 descripcion: '',
-                limiteFotosPorPersona: 3,
                 imagenConcursoUrl: '',
             });
             setEstado('pendiente');
@@ -135,9 +132,9 @@ const CrearConcurso = ({ currentUser }) => {
                             pureBase64String = base64Result;
                         }
                         try {
-                            const url = await uploadImageToImgbb(pureBase64String);
-                            if (url) {
-                                setFieldValueFormik('imagenConcursoUrl', url);
+                            const imageUploadResult = await uploadImageToImgbb(pureBase64String);
+                            if (imageUploadResult && imageUploadResult.display_url) {
+                                setFieldValueFormik('imagenConcursoUrl', imageUploadResult.display_url);
                                 setServerError('');
                             } else {
                                 setServerError("Error al subir la imagen a ImgBB (URL no recibida).");
@@ -171,9 +168,9 @@ const CrearConcurso = ({ currentUser }) => {
             if (!result.canceled && result.assets && result.assets.length > 0) {
                 const pureBase64FromMobile = result.assets[0].base64;
                 try {
-                    const url = await uploadImageToImgbb(pureBase64FromMobile);
-                    if (url) {
-                        setFieldValueFormik('imagenConcursoUrl', url);
+                    const imageUploadResult = await uploadImageToImgbb(pureBase64FromMobile);
+                    if (imageUploadResult && imageUploadResult.display_url) {
+                        setFieldValueFormik('imagenConcursoUrl', imageUploadResult.display_url);
                         setServerError('');
                     } else {
                         setServerError("Error al subir la imagen a ImgBB (móvil, URL no recibida).");
@@ -188,7 +185,7 @@ const CrearConcurso = ({ currentUser }) => {
             }
         }
     };
-    
+
     const handleDateChange = (fieldName, selectedDate, setFieldValue) => {
         // selectedDate ya viene del picker (día, mes, año)
         // formInitialValues[fieldName] sería la fecha completa actual en el formik state
@@ -219,7 +216,6 @@ const CrearConcurso = ({ currentUser }) => {
             fechaFin: values.fechaFin.toISOString(),
             fechaFinVotacion: values.fechaFinVotacion.toISOString(),
             descripcion: values.descripcion,
-            limiteFotosPorPersona: parseInt(values.limiteFotosPorPersona),
             imagenConcursoUrl: values.imagenConcursoUrl,
             estado: estado, 
         };
@@ -247,7 +243,7 @@ const CrearConcurso = ({ currentUser }) => {
                         fechaInicio: setDateTo10AM(new Date()),
                         fechaFin: setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 7))),
                         fechaFinVotacion: setDateTo10AM(new Date(new Date().setDate(new Date().getDate() + 14))),
-                        descripcion: '', limiteFotosPorPersona: 3, imagenConcursoUrl: '',
+                        descripcion: '', imagenConcursoUrl: '',
                     });
                 }
                 navigation.navigate('FichaConcurso', { concursoId: id, timestamp: new Date().getTime() });
@@ -277,23 +273,23 @@ const CrearConcurso = ({ currentUser }) => {
                     {serverError ? <Text style={styles.error}>{serverError}</Text> : null}
                     {!isAdminUser && <Text style={styles.error}>No tienes permisos para {isEditMode ? 'editar' : 'crear'} concursos.</Text>}
 
-                    <TextInput
+            <TextInput
                         style={[styles.input, (touched.nombreEvento && errors.nombreEvento) && styles.inputError]}
-                        placeholder="Nombre del Evento"
+                placeholder="Nombre del Evento"
                         value={values.nombreEvento}
                         onChangeText={handleChange('nombreEvento')}
                         onBlur={handleBlur('nombreEvento')}
-                        editable={isAdminUser}
-                    />
+                editable={isAdminUser}
+            />
                     {touched.nombreEvento && errors.nombreEvento && (<Text style={styles.errorText}>{errors.nombreEvento}</Text>)}
                     
-                    <TextInput
+            <TextInput
                         style={[styles.input, styles.textArea, (touched.tema && errors.tema) && styles.inputError]}
                         placeholder="Tema del concurso"
                         value={values.tema}
                         onChangeText={handleChange('tema')}
                         onBlur={handleBlur('tema')}
-                        editable={isAdminUser}
+                editable={isAdminUser}
                         multiline={true}
                         numberOfLines={2}
                     />
@@ -315,9 +311,9 @@ const CrearConcurso = ({ currentUser }) => {
                             <DatePickerWeb
                                 selected={values.fechaFin}
                                 onChange={(date) => setFieldValue('fechaFin', setDateTo10AM(date))}
-                                dateFormat="yyyy-MM-dd"
+                        dateFormat="yyyy-MM-dd"
                                 minDate={values.fechaInicio}
-                                disabled={!isAdminUser}
+                        disabled={!isAdminUser}
                                 className={styles.datePickerWebInput}
                             />
                             {touched.fechaFin && errors.fechaFin && (<Text style={styles.errorText}>{errors.fechaFin}</Text>)}
@@ -326,48 +322,48 @@ const CrearConcurso = ({ currentUser }) => {
                             <DatePickerWeb
                                 selected={values.fechaFinVotacion}
                                 onChange={(date) => setFieldValue('fechaFinVotacion', setDateTo10AM(date))}
-                                dateFormat="yyyy-MM-dd"
+                        dateFormat="yyyy-MM-dd"
                                 minDate={values.fechaFin} 
-                                disabled={!isAdminUser}
+                        disabled={!isAdminUser}
                                 className={styles.datePickerWebInput}
-                            />
+                    />
                             {touched.fechaFinVotacion && errors.fechaFinVotacion && (<Text style={styles.errorText}>{errors.fechaFinVotacion}</Text>)}
-                        </>
+                </>
                     ) : ( Platform.OS !== 'web' && DateTimePicker && 
-                        <>
-                            <View>
+                <>
+                    <View>
                                 <Text style={styles.label}>Fecha de Inicio (será a las 10:00 AM):</Text>
                                 <Pressable onPress={() => isAdminUser && setShowDatePickerInicio(true)} disabled={!isAdminUser}>
-                                    <TextInput
+                            <TextInput
                                         style={[styles.input, (touched.fechaInicio && errors.fechaInicio) && styles.inputError]}
                                         value={formatDate(values.fechaInicio)} // Muestra solo la fecha formateada
-                                        editable={false}
+                                editable={false}
                                         placeholder="Seleccionar fecha de inicio"
-                                    />
-                                </Pressable>
-                                {showDatePickerInicio && (
-                                    <DateTimePicker
+                            />
+                        </Pressable>
+                        {showDatePickerInicio && (
+                            <DateTimePicker
                                         value={values.fechaInicio} // values.fechaInicio ya tiene la hora 10 AM
                                         mode="date" // Solo permite seleccionar día
-                                        display="default"
+                                display="default"
                                         onChange={(event, date) => handleDateChange('fechaInicio', date, setFieldValue)}
-                                    />
-                                )}
+                            />
+                        )}
                                 {touched.fechaInicio && errors.fechaInicio && (<Text style={styles.errorText}>{errors.fechaInicio}</Text>)}
-                            </View>
+                    </View>
 
-                            <View>
+                    <View>
                                 <Text style={styles.label}>Fecha de Fin (Cierre Subida Fotos, será a las 10:00 AM):</Text>
                                 <Pressable onPress={() => isAdminUser && setShowDatePickerFin(true)} disabled={!isAdminUser}>
-                                    <TextInput
+                            <TextInput
                                         style={[styles.input, (touched.fechaFin && errors.fechaFin) && styles.inputError]}
                                         value={formatDate(values.fechaFin)}
-                                        editable={false}
+                                editable={false}
                                         placeholder="Seleccionar fecha de fin"
-                                    />
-                                </Pressable>
-                                {showDatePickerFin && (
-                                    <DateTimePicker
+                            />
+                        </Pressable>
+                        {showDatePickerFin && (
+                            <DateTimePicker
                                         value={values.fechaFin}
                                         mode="date"
                                         display="default"
@@ -391,45 +387,34 @@ const CrearConcurso = ({ currentUser }) => {
                                 {showDatePickerFinVotacion && (
                                     <DateTimePicker
                                         value={values.fechaFinVotacion}
-                                        mode="date"
-                                        display="default"
+                                mode="date"
+                                display="default"
                                         minimumDate={values.fechaFin}
                                         onChange={(event, date) => handleDateChange('fechaFinVotacion', date, setFieldValue)}
-                                    />
-                                )}
+                            />
+                        )}
                                 {touched.fechaFinVotacion && errors.fechaFinVotacion && (<Text style={styles.errorText}>{errors.fechaFinVotacion}</Text>)}
-                            </View>
-                        </>
-                    )}
+                    </View>
+                </>
+            )}
 
-                    <TextInput
+            <TextInput
                         style={[styles.input, styles.textArea, (touched.descripcion && errors.descripcion) && styles.inputError]}
                         placeholder="Descripción detallada del concurso"
                         value={values.descripcion}
                         onChangeText={handleChange('descripcion')}
                         onBlur={handleBlur('descripcion')}
-                        editable={isAdminUser}
+                editable={isAdminUser}
                         multiline
                         numberOfLines={4}
                     />
                     {touched.descripcion && errors.descripcion && (<Text style={styles.errorText}>{errors.descripcion}</Text>)}
 
-                    <TextInput
-                        style={[styles.input, (touched.limiteFotosPorPersona && errors.limiteFotosPorPersona) && styles.inputError]}
-                        placeholder="Límite de Fotos por Persona (ej: 3)"
-                        value={values.limiteFotosPorPersona.toString()}
-                        onChangeText={(text) => setFieldValue('limiteFotosPorPersona', text === '' ? '' : parseInt(text, 10))}
-                        onBlur={handleBlur('limiteFotosPorPersona')}
-                        keyboardType="number-pad"
-                        editable={isAdminUser}
-                    />
-                    {touched.limiteFotosPorPersona && errors.limiteFotosPorPersona && (<Text style={styles.errorText}>{errors.limiteFotosPorPersona}</Text>)}
-
                     <Pressable style={styles.imagePicker} onPress={() => selectImage(setFieldValue)} disabled={!isAdminUser}>
                         <Text style={styles.imagePickerText}>
                             {values.imagenConcursoUrl ? 'Cambiar Imagen del Concurso' : 'Seleccionar Imagen del Concurso'}
                         </Text>
-                    </Pressable>
+            </Pressable>
                     {touched.imagenConcursoUrl && errors.imagenConcursoUrl && !values.imagenConcursoUrl && 
                         (<Text style={styles.errorText}>{errors.imagenConcursoUrl}</Text>)}
                     
@@ -448,8 +433,8 @@ const CrearConcurso = ({ currentUser }) => {
                         disabled={!isAdminUser || isSubmitting || !values.imagenConcursoUrl}
                     >
                         <Text style={styles.textButton}>{isSubmitting ? 'Guardando...' : (isEditMode ? 'Guardar Cambios' : 'Crear Concurso')}</Text>
-                    </Pressable>
-                </ScrollView>
+            </Pressable>
+        </ScrollView>
             )}
         </Formik>
     );

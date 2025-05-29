@@ -83,15 +83,15 @@ graph LR
     A --> F[Ver Ranking];
     G((Administrador)) --> H[Gestionar Concursos];
     G --> I[Gestionar Usuarios];
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style G fill:#ccf,stroke:#333,stroke-width:2px
-    style B fill:#fcc,stroke:#333,stroke-width:2px
-    style C fill:#ffc,stroke:#333,stroke-width:2px
-    style D fill:#cff,stroke:#333,stroke-width:2px
-    style E fill:#cfc,stroke:#333,stroke-width:2px
-    style F fill:#f9f,stroke:#333,stroke-width:2px
-    style H fill:#f9f,stroke:#333,stroke-width:2px
-    style I fill:#f9f,stroke:#333,stroke-width:2px
+    style A fill:#f9f,stroke:#fff,stroke-width:2px
+    style G fill:#ccf,stroke:#fff,stroke-width:2px
+    style B fill:#fcc,stroke:#fff,stroke-width:2px
+    style C fill:#ffc,stroke:#fff,stroke-width:2px
+    style D fill:#cff,stroke:#fff,stroke-width:2px
+    style E fill:#cfc,stroke:#fff,stroke-width:2px
+    style F fill:#f9f,stroke:#fff,stroke-width:2px
+    style H fill:#f9f,stroke:#fff,stroke-width:2px
+    style I fill:#f9f,stroke:#fff,stroke-width:2px
 ```
 
 ## 3. Desarrollo del Proyecto

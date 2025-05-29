@@ -1,9 +1,0 @@
-flujo de estados: pendiente>activo>finalizado
-
-En firebase cloud
-Notificaciones: Inicio de concurso, fin de votaciones
-
-Comentarios en fotos de la galeria
-
-Carga Infinita : para galeria
-

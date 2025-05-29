@@ -23,3 +23,11 @@ expo install expo-file-system
 
 Iniciar Proyecto: 
 npx expo start
+
+
+Despliegue:
+npm install -g eas-cli
+npx expo export --platform web
+eas workflow:run deploy-web.yml
+eas deploy --prod
+eas build:download --platform android

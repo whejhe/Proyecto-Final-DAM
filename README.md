@@ -97,7 +97,7 @@ npm install
 Puedes iniciar la aplicación utilizando el siguiente comando:
 
 ```bash
-npm start
+npx expo start
 ```
 
 Esto abrirá las herramientas de desarrollador de Expo en tu navegador. Luego, puedes ejecutar la aplicación en un simulador de Android o iOS, o en un dispositivo físico utilizando la aplicación Expo Go.
@@ -137,18 +137,18 @@ Siéntete libre de enviar problemas o pull requests para mejoras o correcciones 
 
 ### Diagrama de la Base de Datos (Firebase - NoSQL)
 
-```
+```mermaid
 graph LR
-    Usuarios((Usuarios))
     Concursos((Concursos))
-    Imagenes((Imagenes))
+    participantesConcurso((participantesConcurso))
+    users((users))
 
-    Usuarios --> Concursos: Creador
-    Concursos --> Imagenes: Galería
+    Concursos -- has --> participantesConcurso
+    participantesConcurso -- belongs to --> users
 
-    style Usuarios fill:#f9f,stroke:#333,stroke-width:2px
-    style Concursos fill:#ccf,stroke:#333,stroke-width:2px
-    style Imagenes fill:#fcc,stroke:#333,stroke-width:2px
+    style Concursos fill:#232323,stroke:#fff,stroke-width:2px
+    style participantesConcurso fill:#232323,stroke:#fff,stroke-width:2px
+    style users fill:#232323,stroke:#fff,stroke-width:2px
 ```
 
 ### Diagrama de Arquitectura de la Aplicación
@@ -170,22 +170,22 @@ graph LR
     A --> N[Login];
     A --> O[Register];
     A --> P[ForgotPassword];
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#ccf,stroke:#333,stroke-width:2px
-    style C fill:#fcc,stroke:#333,stroke-width:2px
-    style D fill:#ffc,stroke:#333,stroke-width:2px
-    style E fill:#cff,stroke:#333,stroke-width:2px
-    style F fill:#cfc,stroke:#333,stroke-width:2px
-    style G fill:#f9f,stroke:#333,stroke-width:2px
-    style H fill:#f9f,stroke:#333,stroke-width:2px
-    style I fill:#f9f,stroke:#333,stroke-width:2px
-    style J fill:#f9f,stroke:#333,stroke-width:2px
-    style K fill:#f9f,stroke:#333,stroke-width:2px
-    style L fill:#f9f,stroke:#333,stroke-width:2px
-    style M fill:#f9f,stroke:#333,stroke-width:2px
-    style N fill:#Login,stroke:#333,stroke-width:2px
-    style O fill:#Register,stroke:#333,stroke-width:2px
-    style P fill:#ForgotPassword,stroke:#333,stroke-width:2px
+    style A fill:#232323,stroke:#fff,stroke-width:2px
+    style B fill:#232323,stroke:#fff,stroke-width:2px
+    style C fill:#232323,stroke:#fff,stroke-width:2px
+    style D fill:#232323,stroke:#fff,stroke-width:2px
+    style E fill:#232323,stroke:#fff,stroke-width:2px
+    style F fill:#232323,stroke:#fff,stroke-width:2px
+    style G fill:#232323,stroke:#fff,stroke-width:2px
+    style H fill:#232323,stroke:#fff,stroke-width:2px
+    style I fill:#232323,stroke:#fff,stroke-width:2px
+    style J fill:#232323,stroke:#fff,stroke-width:2px
+    style K fill:#232323,stroke:#fff,stroke-width:2px
+    style L fill:#232323,stroke:#fff,stroke-width:2px
+    style M fill:#232323,stroke:#fff,stroke-width:2px
+    style N fill:#232323,stroke:#fff,stroke-width:2px
+    style O fill:#232323,stroke:#fff,stroke-width:2px
+    style P fill:#232323,stroke:#fff,stroke-width:2px
 ```
 
 ### Diagrama de Casos de Uso
@@ -199,15 +199,15 @@ graph LR
     A --> F[Ver Ranking];
     G((Administrador)) --> H[Gestionar Concursos];
     G --> I[Gestionar Usuarios];
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style G fill:#ccf,stroke:#333,stroke-width:2px
-    style B fill:#fcc,stroke:#333,stroke-width:2px
-    style C fill:#ffc,stroke:#333,stroke-width:2px
-    style D fill:#cff,stroke:#333,stroke-width:2px
-    style E fill:#cfc,stroke:#333,stroke-width:2px
-    style F fill:#f9f,stroke:#333,stroke-width:2px
-    style H fill:#f9f,stroke:#333,stroke-width:2px
-    style I fill:#f9f,stroke:#333,stroke-width:2px
+    style A fill:#232323,stroke:#fff,stroke-width:2px
+    style G fill:#232323,stroke:#fff,stroke-width:2px
+    style B fill:#232323,stroke:#fff,stroke-width:2px
+    style C fill:#232323,stroke:#fff,stroke-width:2px
+    style D fill:#232323,stroke:#fff,stroke-width:2px
+    style E fill:#232323,stroke:#fff,stroke-width:2px
+    style F fill:#232323,stroke:#fff,stroke-width:2px
+    style H fill:#232323,stroke:#fff,stroke-width:2px
+    style I fill:#232323,stroke:#fff,stroke-width:2px
 ```
 
 ## 3. Desarrollo del Proyecto
@@ -254,5 +254,53 @@ graph LR
 ## 7. Consideraciones de Ampliación Futura
 
 *   Implementación de notificaciones push.
-*   Implementación de pagos.
 *   Implementación de un sistema de comentarios.
+
+## 8. Esquema de la base de datos
+
+### Esquema Entidad/Relación (SQL)
+
+```sql
+CREATE TABLE users (
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255),
+    email VARCHAR(255),
+    role LONGTEXT,
+    createdAt DATETIME,
+    avatar VARCHAR(255)
+);
+
+CREATE TABLE concursos (
+    id VARCHAR(255) PRIMARY KEY,
+    nombreEvento VARCHAR(255),
+    tema VARCHAR(255),
+    fechaInicio DATETIME,
+    fechaFin DATETIME,
+    fechaFinVotacion DATETIME,
+    descripcion VARCHAR(255),
+    imagenConcursoUrl VARCHAR(255),
+    estado VARCHAR(255),
+    creatorId VARCHAR(255),
+    usersId LONGTEXT,
+    createdAt DATETIME
+);
+
+CREATE TABLE participacionesConcurso (
+    id VARCHAR(255) PRIMARY KEY,
+    concursoId VARCHAR(255),
+    userId VARCHAR(255),
+    imagenes [slot1, slot2, slot2]
+);
+
+CREATE TABLE blockedUsers (
+    id VARCHAR(255) PRIMARY KEY,
+    blocked TINYINT(1),
+    blockedAt DATETIME
+);
+
+CREATE TABLE userContestVotingStats (
+    id VARCHAR(255) PRIMARY KEY,
+    distinctImagesVotedCount INTEGER,
+    imagesVotedSet LONGTEXT,
+    lastVotedTimestamp DATETIME
+);

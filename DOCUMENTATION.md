@@ -138,7 +138,6 @@ graph LR
 ## 7. Consideraciones de Ampliación Futura
 
 *   Implementación de notificaciones push.
-*   Implementación de pagos.
 *   Implementación de un sistema de comentarios.
 
 ## 8. Esquema de la base de datos

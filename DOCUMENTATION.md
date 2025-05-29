@@ -34,7 +34,7 @@ graph LR
 
 ### Diagrama de Arquitectura de la Aplicación
 
-```mermaid
+\`\`\`mermaid
 graph LR
     A[App.js] --> B(React Navigation);
     B --> C{Tab Navigator};
@@ -67,11 +67,11 @@ graph LR
     style N fill:#232323,stroke:#fff,stroke-width:2px
     style O fill:#232323,stroke:#fff,stroke-width:2px
     style P fill:#232323,stroke:#fff,stroke-width:2px
-```
+\`\`\`
 
 ### Diagrama de Casos de Uso
 
-```mermaid
+\`\`\`mermaid
 graph LR
     A((Usuario)) --> B[Autenticarse];
     A --> C[Ver Concursos];
@@ -89,7 +89,7 @@ graph LR
     style F fill:#232323,stroke:#fff,stroke-width:2px
     style H fill:#232323,stroke:#fff,stroke-width:2px
     style I fill:#232323,stroke:#fff,stroke-width:2px
-```
+\`\`\`
 
 ## 3. Desarrollo del Proyecto
 

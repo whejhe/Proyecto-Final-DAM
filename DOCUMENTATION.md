@@ -21,19 +21,16 @@
 
 ### Diagrama de la Base de Datos (Firebase - NoSQL)
 
-```
+\`\`\`mermaid
 graph LR
-    Usuarios((Usuarios))
     Concursos((Concursos))
-    Imagenes((Imagenes))
+    participantesConcurso((participantesConcurso))
+    users((users))
 
-    Usuarios --> Concursos: Creador
-    Concursos --> Imagenes: Galería
-
-    style Usuarios fill:#f9f,stroke:#333,stroke-width:2px
-    style Concursos fill:#ccf,stroke:#333,stroke-width:2px
-    style Imagenes fill:#fcc,stroke:#333,stroke-width:2px
-```
+    style Concursos fill:#f9f,stroke:#333,stroke-width:2px
+    style participantesConcurso fill:#ccf,stroke:#333,stroke-width:2px
+    style users fill:#fcc,stroke:#333,stroke-width:2px
+\`\`\`
 
 ### Diagrama de Arquitectura de la Aplicación
 
@@ -140,3 +137,46 @@ graph LR
 *   Implementación de notificaciones push.
 *   Implementación de pagos.
 *   Implementación de un sistema de comentarios.
+
+## 8. Esquema de la base de datos
+
+### Concursos:
+*   createdAt
+*   creatorId ""
+*   descripcion ""
+*   estado ""
+*   fechaFin ""
+*   fechaFinVotacion ""
+*   fechaInicio ""
+*   imagenConcursoUrl ""
+*   nombreEvento ""
+*   tema ""
+*   usersId []
+
+### participantesConcurso:
+*   concursoId "potpTa9YufaGVKN1nXOW"
+*   imagenes
+    *   slot1
+        *   delete_url ""
+        *   estadoImagen ""
+        *   uploadedAt
+        *   url ""
+    *   slot2
+        *   delete_url ""
+        *   estadoImagen ""
+        *   uploadedAt
+        *   url ""
+    *   slot3
+        *   delete_url ""
+        *   estadoImagen ""
+        *   uploadedAt
+        *   url ""
+*   userId ""
+
+### users:
+*   avatar ""
+*   createdAt
+*   email ""
+*   name ""
+*   role []
+*   uid ""

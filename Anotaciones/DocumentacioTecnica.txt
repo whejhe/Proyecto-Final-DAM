@@ -1,0 +1,160 @@
+# Documentación Técnica Detallada del Proyecto
+
+## Descripción General
+Este documento proporciona una descripción técnica detallada del proyecto, incluyendo su estructura, componentes, servicios, dependencias, lógica de código y flujo de datos.
+
+## Estructura del Proyecto
+```
+Proyecto-Final-DAM
+├── src
+│   ├── App.js
+│   ├── config
+│   │   └── firebase.js
+│   ├── pages
+│   │   ├── CrearConcurso.js
+│   │   ├── FichaConcurso.js
+│   │   ├── ForgotPassword.js
+│   │   ├── Galeria.js
+│   │   ├── Home.js
+│   │   ├── ListadoConcursos.js
+│   │   ├── listaUsuarios.js
+│   │   ├── Login.js
+│   │   ├── PanelAdmin.js
+│   │   ├── Perfil.js
+│   │   ├── RankingConcurso.js
+│   │   └── Register.js
+│   ├── services
+│   │   ├── authService.js
+│   │   ├── contestService.js
+│   │   ├── countdownService.js
+│   │   ├── dateService.js
+│   │   ├── imageService.js
+│   │   ├── userService.js
+│   │   └── validationService.js
+├── index.js                # Punto de entrada de la aplicación
+├── package.json            # Dependencias y scripts del proyecto
+└── README.md               # Documentación del proyecto
+```
+
+## Componentes Principales
+
+### `src/App.js`
+Este es el componente principal de la aplicación. Utiliza `react-navigation` para manejar la navegación entre diferentes pantallas. Define dos navegadores:
+- `Stack Navigator`: Para la autenticación (Login, Register, ForgotPassword).
+- `Tab Navigator`: Para la aplicación principal (Home, Perfil, PanelAdmin).
+
+Utiliza `Firebase` para la autenticación y gestiona el estado del usuario (`currentUser`, `isAdminUser`).
+
+#### Lógica Detallada
+1. **Estados:**
+   - `currentUser`: Almacena el usuario autenticado actual.
+   - `isAdminUser`: Almacena un booleano que indica si el usuario actual es administrador.
+
+2. **Efectos Secundarios (useEffect):**
+   - El primer `useEffect` se encarga de escuchar los cambios en el estado de autenticación de Firebase. Cuando el estado cambia (usuario inicia o cierra sesión), se actualiza el estado `currentUser`. Si el usuario está autenticado, se verifica si es administrador utilizando la función `isAdmin` del servicio `authService`.
+   - La función `handleLogout` cierra la sesión del usuario utilizando la función `logoutUser` del servicio `authService` y actualiza el estado `currentUser` a `null`.
+
+3. **Navegación:**
+   - Si `currentUser` es `null`, se muestra el `Stack Navigator` con las pantallas de autenticación (Login, Register, ForgotPassword).
+   - Si `currentUser` no es `null`, se muestra el `Tab Navigator` con las pantallas principales (Home, Perfil, PanelAdmin). La pantalla `PanelAdmin` solo se muestra si el usuario es administrador (`isAdminUser` es `true`).
+
+4. **Componente `HomeStack`:**
+   - Es un `Stack Navigator` que contiene las pantallas relacionadas con la funcionalidad principal de la aplicación (Home, ListadoConcursos, FichaConcurso, etc.).
+   - Recibe el `currentUser` como prop para pasarlo a las pantallas que lo necesiten.
+
+### `src/config/firebase.js`
+Este archivo contiene la configuración de Firebase para la aplicación. Inicializa Firebase y exporta la instancia de autenticación (`FIREBASE_AUTH`).
+
+#### Lógica Detallada
+1. **Configuración de Firebase:**
+   - Define un objeto `firebaseConfig` con las credenciales del proyecto Firebase.
+   - Inicializa la aplicación Firebase utilizando `initializeApp(firebaseConfig)`.
+
+2. **Inicialización de Firebase Auth:**
+   - Inicializa Firebase Auth con persistencia utilizando `initializeAuth`.
+   - Utiliza `getReactNativePersistence(ReactNativeAsyncStorage)` para la persistencia en dispositivos móviles y `indexedDBLocalPersistence` para la persistencia en la web.
+
+3. **Exportación de Instancias:**
+   - Exporta la instancia de la aplicación Firebase (`FIREBASE_APP`), la instancia de autenticación (`FIREBASE_AUTH`) y la instancia de Firestore (`FIRESTORE_DB`) para ser utilizadas en otros componentes y servicios.
+
+### `src/pages/`
+Este directorio contiene los componentes de las diferentes páginas de la aplicación:
+- `Login.js`: Componente para la página de inicio de sesión.
+- `Register.js`: Componente para la página de registro.
+- `Home.js`: Componente para la página principal.
+- `PanelAdmin.js`: Componente para el panel de administración.
+- `ForgotPassword.js`: Componente para la página de recuperación de contraseña.
+- `Perfil.js`: Componente para la página de perfil del usuario.
+- `ListadoConcursos.js`: Componente para listar los concursos.
+- `FichaConcurso.js`: Componente para mostrar la ficha de un concurso.
+- `CrearConcurso.js`: Componente para crear un nuevo concurso.
+- `ListaUsuarios.js`: Componente para listar los usuarios.
+- `Galeria.js`: Componente para la galería de imágenes.
+- `RankingConcurso.js`: Componente para mostrar el ranking de un concurso.
+
+#### Lógica Detallada (Ejemplo: `Login.js`)
+1. **Estado:**
+   - `serverError`: Almacena los errores del servidor.
+
+2. **Función `handleLoginSubmit`:**
+   - Recibe los valores del formulario y el objeto `setSubmitting` de Formik.
+   - Llama a la función `loginUser` del servicio `authService` para iniciar sesión.
+   - Si el inicio de sesión es exitoso, muestra un mensaje en la consola.
+   - Si el inicio de sesión falla, actualiza el estado `serverError` con el mensaje de error y muestra un toast.
+   - Establece `setSubmitting(false)` para indicar que el proceso ha terminado.
+
+3. **Formulario:**
+   - Utiliza el componente `Formik` para manejar el estado del formulario, la validación y el envío.
+   - Define el esquema de validación utilizando `loginValidationSchema` del servicio `validationService`.
+   - Renderiza los campos del formulario (email y password) utilizando componentes `TextInput` y maneja los eventos `onChangeText` y `onBlur` utilizando las funciones `handleChange` y `handleBlur` de Formik.
+   - Renderiza un botón de envío utilizando el componente `Pressable` y llama a la función `handleSubmit` de Formik cuando se presiona.
+
+### `src/services/`
+Este directorio contiene los servicios utilizados por la aplicación:
+- `authService.js`: Contiene funciones para la autenticación de usuarios (`registerUser`, `loginUser`, `logoutUser`, `isAdmin`, `isSuperAdmin`).
+- `contestService.js`: Contiene funciones para la gestión de concursos (`createContest`, `getContests`, `getContest`, `updateContest`, `deleteContest`).
+- `countdownService.js`: Contiene funciones para el manejo de cuenta regresiva (`calculateTimeRemaining`, `formatTimeRemaining`, `getCountdownDetails`).
+- `dateService.js`: Contiene funciones para el manejo de fechas (`formatDate`, `parseDate`).
+- `imageService.js`: Contiene funciones para la gestión de imágenes (`uploadImageToImgbb`, `deleteImageFromImgbb`, `isValidImageSize`).
+- `userService.js`: Contiene funciones para la gestión de usuarios (`useUser`).
+- `validationService.js`: Contiene funciones para la validación de datos (`loginValidationSchema`, `registerValidationSchema`, `contestValidationSchema`).
+
+#### Lógica Detallada (Ejemplo: `authService.js`)
+1. **Función `registerUser`:**
+   - Recibe el email, la contraseña, el nombre y el avatar del usuario.
+   - Crea un nuevo usuario en Firebase Authentication utilizando `createUserWithEmailAndPassword`.
+   - Crea un nuevo documento en la colección "users" de Firestore con los datos del usuario.
+   - Retorna un objeto con `success: true` y el objeto `user` si el registro es exitoso.
+   - Retorna un objeto con `success: false` y el mensaje de error si el registro falla.
+
+2. **Función `loginUser`:**
+   - Recibe el email y la contraseña del usuario.
+   - Inicia sesión en Firebase Authentication utilizando `signInWithEmailAndPassword`.
+   - Comprueba si el usuario está bloqueado consultando la colección "blockedUsers" en Firestore.
+   - Si el usuario está bloqueado, cierra la sesión y retorna un objeto con `success: false` y un mensaje de error.
+   - Si el usuario no está bloqueado, retorna un objeto con `success: true` y el objeto `user`.
+   - Retorna un objeto con `success: false` y el mensaje de error si el inicio de sesión falla.
+
+## Dependencias
+
+- `@react-navigation/stack`: Se utiliza para la navegación entre pantallas en forma de pila (stack). Implementado en `src/App.js`.
+- `@react-navigation/bottom-tabs`: Se utiliza para la navegación con pestañas en la parte inferior de la pantalla. Implementado en `src/App.js`.
+- `@react-navigation/native`: Es el core de la librería de react-navigation. Implementado en `src/App.js`.
+- `expo`: Framework para crear aplicaciones universales de React.
+- `firebase`: Se utiliza para la autenticación y gestión de datos en la nube. Implementado en `src/config/firebase.js` y `src/services/authService.js`.
+- `react`: Librería para construir interfaces de usuario.
+- `react-native`: Framework para construir aplicaciones nativas con React.
+- `react-native-vector-icons`: Se utiliza para mostrar iconos vectoriales. Implementado en `src/App.js`.
+- `formik`: Se utiliza para manejar formularios y validaciones.
+- `yup`: Se utiliza para definir esquemas de validación.
+- `expo-image-picker`: Se utiliza para seleccionar imágenes de la galería o la cámara del dispositivo.
+- `react-native-toast-message`: Se utiliza para mostrar mensajes toast en la aplicación.
+
+## Diagramas
+[Aquí se incluirían diagramas de la base de datos, arquitectura de la aplicación, casos de uso, etc.]
+
+## Decisiones Técnicas
+[Aquí se incluirían comentarios sobre decisiones técnicas, dificultades encontradas y soluciones implementadas.]
+
+## Consideraciones de Ampliación Futura
+[Aquí se incluirían propuestas de mejora o funcionalidades adicionales.]

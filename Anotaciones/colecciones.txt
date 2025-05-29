@@ -1,0 +1,54 @@
+
+Concursos:  
+    createdAt
+    creatorId ""
+    descripcion ""
+    estado ""
+    fechaFin ""
+    fechaFinVotacion ""
+    fechaInicio ""
+    imagenConcursoUrl ""
+    nombreEvento ""
+    tema ""
+    usersId []
+
+
+
+participantesConcurso:
+concursoId "potpTa9YufaGVKN1nXOW"
+imagenes
+slot1 [
+
+    delete_url ""
+    estadoImagen ""
+    uploadedAt
+    url ""
+]
+slot2 [
+
+delete_url ""
+estadoImagen ""
+uploadedAt 
+url ""
+]
+slot3 [
+delete_url ""
+estadoImagen ""
+uploadedAt 
+url ""
+
+]
+userId "" 
+
+
+
+users:
+
+avatar ""
+createdAt
+email ""
+name ""
+role []
+uid "" 
+
+

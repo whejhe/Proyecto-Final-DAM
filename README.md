@@ -113,3 +113,146 @@ Esto abrirá las herramientas de desarrollador de Expo en tu navegador. Luego, p
 
 ## Contribución
 Siéntete libre de enviar problemas o pull requests para mejoras o correcciones de errores.
+
+# Proyecto Final - DAM - Documentación
+
+## 1. Tecnologías Utilizadas
+
+*   **React Native:** A JavaScript framework for writing real, natively rendering mobile applications for iOS and Android.
+    *   Version: 0.76.9
+    *   Justification: Cross-platform mobile development, code reusability, large community support.
+*   **Firebase:** A Backend-as-a-Service (BaaS) platform.
+    *   Version: 11.3.1
+    *   Justification: Authentication, database, storage, and hosting.
+*   **React Navigation:** A library for handling navigation in React Native applications.
+    *   Version: 4.4.4
+    *   Justification: Provides a simple way to define the structure of the application's navigation.
+*   **Expo:** A framework and platform for universal React applications.
+    *   Version: ~52.0.37
+    *   Justification: Simplifies the development, building, and deployment of React Native applications.
+*   **react-native-toast-message:** A library for displaying toast messages.
+    *   Version: ^2.3.0
+
+## 2. Diagramas
+
+### Diagrama de la Base de Datos (Firebase - NoSQL)
+
+```
+graph LR
+    Usuarios((Usuarios))
+    Concursos((Concursos))
+    Imagenes((Imagenes))
+
+    Usuarios --> Concursos: Creador
+    Concursos --> Imagenes: Galería
+
+    style Usuarios fill:#f9f,stroke:#333,stroke-width:2px
+    style Concursos fill:#ccf,stroke:#333,stroke-width:2px
+    style Imagenes fill:#fcc,stroke:#333,stroke-width:2px
+```
+
+### Diagrama de Arquitectura de la Aplicación
+
+```mermaid
+graph LR
+    A[App.js] --> B(React Navigation);
+    B --> C{Tab Navigator};
+    C --> D(HomeStack);
+    C --> E(Perfil);
+    C --> F(PanelAdmin);
+    D --> G[Home];
+    D --> H[ListadoConcursos];
+    D --> I[FichaConcurso];
+    D --> J[Galeria];
+    D --> K[RankingConcurso];
+    D --> L[CrearConcurso];
+    D --> M[ListaUsuarios];
+    A --> N[Login];
+    A --> O[Register];
+    A --> P[ForgotPassword];
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style B fill:#ccf,stroke:#333,stroke-width:2px
+    style C fill:#fcc,stroke:#333,stroke-width:2px
+    style D fill:#ffc,stroke:#333,stroke-width:2px
+    style E fill:#cff,stroke:#333,stroke-width:2px
+    style F fill:#cfc,stroke:#333,stroke-width:2px
+    style G fill:#f9f,stroke:#333,stroke-width:2px
+    style H fill:#f9f,stroke:#333,stroke-width:2px
+    style I fill:#f9f,stroke:#333,stroke-width:2px
+    style J fill:#f9f,stroke:#333,stroke-width:2px
+    style K fill:#f9f,stroke:#333,stroke-width:2px
+    style L fill:#f9f,stroke:#333,stroke-width:2px
+    style M fill:#f9f,stroke:#333,stroke-width:2px
+    style N fill:#Login,stroke:#333,stroke-width:2px
+    style O fill:#Register,stroke:#333,stroke-width:2px
+    style P fill:#ForgotPassword,stroke:#333,stroke-width:2px
+```
+
+### Diagrama de Casos de Uso
+
+```mermaid
+graph LR
+    A((Usuario)) --> B[Autenticarse];
+    A --> C[Ver Concursos];
+    A --> D[Participar en Concursos];
+    A --> E[Ver Galería];
+    A --> F[Ver Ranking];
+    G((Administrador)) --> H[Gestionar Concursos];
+    G --> I[Gestionar Usuarios];
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style G fill:#ccf,stroke:#333,stroke-width:2px
+    style B fill:#fcc,stroke:#333,stroke-width:2px
+    style C fill:#ffc,stroke:#333,stroke-width:2px
+    style D fill:#cff,stroke:#333,stroke-width:2px
+    style E fill:#cfc,stroke:#333,stroke-width:2px
+    style F fill:#f9f,stroke:#333,stroke-width:2px
+    style H fill:#f9f,stroke:#333,stroke-width:2px
+    style I fill:#f9f,stroke:#333,stroke-width:2px
+```
+
+## 3. Desarrollo del Proyecto
+
+*   **Decisiones Técnicas:**
+    *   Uso de React Navigation para la navegación.
+    *   Uso de Firebase para la autenticación y la gestión de datos.
+*   **Dificultades Encontradas:**
+    *   Configuración de Firebase.
+    *   Implementación de la autenticación.
+*   **Soluciones Implementadas:**
+    *   Uso de la documentación de Firebase.
+    *   Implementación de la autenticación con Firebase.
+
+## 4. Manual de Instalación
+
+1.  Install Node.js and npm.
+2.  Install Expo CLI: `npm install -g expo-cli`
+3.  Clone the repository.
+4.  Navigate to the project directory: `cd Proyecto-Final-DAM`
+5.  Install dependencies: `npm install`
+6.  Configure Firebase:
+    *   Create a Firebase project.
+    *   Enable authentication.
+    *   Create a database.
+    *   Add the Firebase configuration to `src/config/firebase.js`.
+7.  Run the application: `expo start`
+
+## 5. Manual de Usuario
+
+1.  Download the application from the store.
+2.  Register or log in.
+3.  Browse the contests.
+4.  Participate in contests.
+5.  View the gallery.
+6.  View the ranking.
+
+## 6. Manual de Administrador
+
+1.  Log in as an administrator.
+2.  Manage contests.
+3.  Manage users.
+
+## 7. Consideraciones de Ampliación Futura
+
+*   Implementación de notificaciones push.
+*   Implementación de pagos.
+*   Implementación de un sistema de comentarios.

@@ -54,22 +54,22 @@ graph LR
     A --> N[Login];
     A --> O[Register];
     A --> P[ForgotPassword];
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#ccf,stroke:#333,stroke-width:2px
-    style C fill:#fcc,stroke:#333,stroke-width:2px
-    style D fill:#ffc,stroke:#333,stroke-width:2px
-    style E fill:#cff,stroke:#333,stroke-width:2px
-    style F fill:#cfc,stroke:#333,stroke-width:2px
-    style G fill:#f9f,stroke:#333,stroke-width:2px
-    style H fill:#f9f,stroke:#333,stroke-width:2px
-    style I fill:#f9f,stroke:#333,stroke-width:2px
-    style J fill:#f9f,stroke:#333,stroke-width:2px
-    style K fill:#f9f,stroke:#333,stroke-width:2px
-    style L fill:#f9f,stroke:#333,stroke-width:2px
-    style M fill:#f9f,stroke:#333,stroke-width:2px
-    style N fill:#f9f,stroke:#333,stroke-width:2px
-    style O fill:#f9f,stroke:#333,stroke-width:2px
-    style P fill:#f9f,stroke:#333,stroke-width:2px
+    style A fill:#232323,stroke:#fff,stroke-width:2px
+    style B fill:#232323,stroke:#fff,stroke-width:2px
+    style C fill:#232323,stroke:#fff,stroke-width:2px
+    style D fill:#232323,stroke:#fff,stroke-width:2px
+    style E fill:#232323,stroke:#fff,stroke-width:2px
+    style F fill:#232323,stroke:#fff,stroke-width:2px
+    style G fill:#232323,stroke:#fff,stroke-width:2px
+    style H fill:#232323,stroke:#fff,stroke-width:2px
+    style I fill:#232323,stroke:#fff,stroke-width:2px
+    style J fill:#232323,stroke:#fff,stroke-width:2px
+    style K fill:#232323,stroke:#fff,stroke-width:2px
+    style L fill:#232323,stroke:#fff,stroke-width:2px
+    style M fill:#232323,stroke:#fff,stroke-width:2px
+    style N fill:#232323,stroke:#fff,stroke-width:2px
+    style O fill:#232323,stroke:#fff,stroke-width:2px
+    style P fill:#232323,stroke:#fff,stroke-width:2px
 ```
 
 ### Diagrama de Casos de Uso

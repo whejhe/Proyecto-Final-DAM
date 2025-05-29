@@ -30,9 +30,9 @@ graph LR
     Concursos -- has --> participantesConcurso
     participantesConcurso -- belongs to --> users
 
-    style Concursos fill:#fff,stroke:#232323,stroke-width:2px
-    style participantesConcurso fill:#fff,stroke:#232323,stroke-width:2px
-    style users fill:#fff,stroke:#232323,stroke-width:2px
+    style Concursos fill:#232323,stroke:#fff,stroke-width:2px
+    style participantesConcurso fill:#232323,stroke:#fff,stroke-width:2px
+    style users fill:#232323,stroke:#fff,stroke-width:2px
 ```
 
 ### Diagrama de Arquitectura de la Aplicación

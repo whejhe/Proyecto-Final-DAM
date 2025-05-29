@@ -21,7 +21,7 @@
 
 ### Diagrama de la Base de Datos (Firebase - NoSQL)
 
-\`\`\`mermaid
+```mermaid
 graph LR
     Concursos((Concursos))
     participantesConcurso((participantesConcurso))
@@ -33,7 +33,7 @@ graph LR
     style Concursos fill:#fff,stroke:#333,stroke-width:2px
     style participantesConcurso fill:#fff,stroke:#333,stroke-width:2px
     style users fill:#fff,stroke:#333,stroke-width:2px
-\`\`\`
+```
 
 ### Diagrama de Arquitectura de la Aplicación
 

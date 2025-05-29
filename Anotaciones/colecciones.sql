@@ -28,7 +28,7 @@ CREATE TABLE participacionesConcurso (
     id VARCHAR(255) PRIMARY KEY,
     concursoId VARCHAR(255),
     userId VARCHAR(255),
-    imagenes LONGTEXT
+    imagenes [slot1, slot2, slot2]
 );
 
 CREATE TABLE blockedUsers (

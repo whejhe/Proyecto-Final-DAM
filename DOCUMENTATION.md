@@ -143,43 +143,49 @@ graph LR
 
 ## 8. Esquema de la base de datos
 
-### Concursos:
-*   createdAt
-*   creatorId ""
-*   descripcion ""
-*   estado ""
-*   fechaFin ""
-*   fechaFinVotacion ""
-*   fechaInicio ""
-*   imagenConcursoUrl ""
-*   nombreEvento ""
-*   tema ""
-*   usersId []
+### Esquema Entidad/Relación (SQL)
 
-### participantesConcurso:
-*   concursoId "potpTa9YufaGVKN1nXOW"
-*   imagenes
-    *   slot1
-        *   delete_url ""
-        *   estadoImagen ""
-        *   uploadedAt
-        *   url ""
-    *   slot2
-        *   delete_url ""
-        *   estadoImagen ""
-        *   uploadedAt
-        *   url ""
-    *   slot3
-        *   delete_url ""
-        *   estadoImagen ""
-        *   uploadedAt
-        *   url ""
-*   userId ""
+```sql
+CREATE TABLE users (
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255),
+    email VARCHAR(255),
+    role LONGTEXT,
+    createdAt DATETIME,
+    avatar VARCHAR(255)
+);
 
-### users:
-*   avatar ""
-*   createdAt
-*   email ""
-*   name ""
-*   role []
-*   uid ""
+CREATE TABLE concursos (
+    id VARCHAR(255) PRIMARY KEY,
+    nombreEvento VARCHAR(255),
+    tema VARCHAR(255),
+    fechaInicio DATETIME,
+    fechaFin DATETIME,
+    fechaFinVotacion DATETIME,
+    descripcion VARCHAR(255),
+    imagenConcursoUrl VARCHAR(255),
+    estado VARCHAR(255),
+    creatorId VARCHAR(255),
+    usersId LONGTEXT,
+    createdAt DATETIME
+);
+
+CREATE TABLE participacionesConcurso (
+    id VARCHAR(255) PRIMARY KEY,
+    concursoId VARCHAR(255),
+    userId VARCHAR(255),
+    imagenes [slot1, slot2, slot2]
+);
+
+CREATE TABLE blockedUsers (
+    id VARCHAR(255) PRIMARY KEY,
+    blocked TINYINT(1),
+    blockedAt DATETIME
+);
+
+CREATE TABLE userContestVotingStats (
+    id VARCHAR(255) PRIMARY KEY,
+    distinctImagesVotedCount INTEGER,
+    imagesVotedSet LONGTEXT,
+    lastVotedTimestamp DATETIME
+);
